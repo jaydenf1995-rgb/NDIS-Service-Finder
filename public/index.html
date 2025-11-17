@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NDIS Service Finder</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1>NDIS Service Finder</h1>
+                <p class="slogan">Help at your fingertips</p>
+            </div>
+            <nav>
+    <a href="index.html">Home</a>
+    <a href="browse.html">Browse Services</a>
+    <a href="add.html">Add a Service</a>
+    <a href="blog.html">News & Resources</a>
+    <a href="login.html" id="loginLink">Login</a>
+    <a href="dashboard.html" id="dashboardLink" style="display: none;">My Dashboard</a>
+    <a href="#" id="logoutBtn" style="display: none;">Logout</a>
+</nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Welcome Blurb -->
+        <section class="welcome-blurb">
+            <h2>Find Trusted NDIS Services in Your Area</h2>
+            <p>Our platform connects you with verified NDIS service providers, support workers, and allied health professionals. Whether you're looking for SIL providers, support coordination, or day programs, we make it easy to find the right services for your needs.</p>
+            <p>Search below to discover services in your community or add your own service to help others find you!</p>
+        </section>
+
+        <!-- Statistics -->
+        <div class="stats-section">
+            <div class="stats">
+                <div class="stat">
+                    <h3 id="totalServices">50+</h3>
+                    <p>Verified Services</p>
+                </div>
+                <div class="stat">
+                    <h3 id="totalLocations">25+</h3>
+                    <p>Suburbs Covered</p>
+                </div>
+                <div class="stat">
+                    <h3>100%</h3>
+                    <p>Free to Use</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Search Section -->
+        <div class="search-section">
+            <input type="text" id="searchBox" placeholder="Search services by name, location, or description...">
+            
+            <div class="filter-toggle">
+                <button id="filterToggle">📍 Advanced Filters</button>
+            </div>
+
+            <div class="advanced-filters" id="advancedFilters" style="display: none;">
+                <div class="filter-group">
+                    <label>Service Categories:</label>
+                    <div class="checkbox-grid">
+                        <label><input type="checkbox" name="category" value="SIL Provider"> SIL Provider</label>
+                        <label><input type="checkbox" name="category" value="Support Worker"> Support Worker</label>
+                        <label><input type="checkbox" name="category" value="Support Coordinator"> Support Coordinator</label>
+                        <label><input type="checkbox" name="category" value="Allied Health Professional"> Allied Health</label>
+                        <label><input type="checkbox" name="category" value="Occupational Therapist"> OT</label>
+                        <label><input type="checkbox" name="category" value="Physiotherapist"> Physio</label>
+                        <label><input type="checkbox" name="category" value="Offers Day Programs"> Day Programs</label>
+                        <label><input type="checkbox" name="category" value="Independent Worker"> Independent Worker</label>
+                        <label><input type="checkbox" name="category" value="Respite"> Respite</label>
+                    </div>
+                </div>
+
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="registeredFilter">NDIS Registered:</label>
+                        <select id="registeredFilter">
+                            <option value="">Any</option>
+                            <option value="Yes">Yes - Registered</option>
+                            <option value="No">No - Not Registered</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="sortBy">Sort By:</label>
+                        <select id="sortBy">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="name">Name A-Z</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button id="applyFilters" class="primary-btn">Apply Filters</button>
+                    <button id="resetFilters" class="secondary-btn">Reset Filters</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Filter Chips -->
+        <div class="category-chips">
+            <button class="chip active" data-category="">All Services</button>
+            <button class="chip" data-category="Support Worker">Support Workers</button>
+            <button class="chip" data-category="SIL Provider">SIL Providers</button>
+            <button class="chip" data-category="Support Coordinator">Coordinators</button>
+            <button class="chip" data-category="Allied Health Professional">Allied Health</button>
+            <button class="chip" data-category="Occupational Therapist">OT</button>
+            <button class="chip" data-category="Physiotherapist">Physio</button>
+            <button class="chip" data-category="Offers Day Programs">Day Programs</button>
+            <button class="chip" data-category="Respite">Respite</button>
+        </div>
+
+        <!-- Search Meta Info -->
+        <div class="search-meta">
+            <div class="results-count">
+                Showing <span id="resultsCount">0</span> services
+            </div>
+            <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+                <span class="loading"></span> Searching...
+            </div>
+        </div>
+
+        <!-- Premium Services Section -->
+        <section class="featured-services">
+            <h2>⭐ Premium Services</h2>
+            <p class="section-subtitle">Featured services with enhanced visibility and premium benefits</p>
+            <ul id="premiumServiceList" class="service-grid"></ul>
+            <p id="noPremiumResults" style="display:none; text-align: center; color: #666; padding: 20px;">
+                No premium services available yet. <a href="premium.html">Be the first to upgrade!</a>
+            </p>
+        </section>
+
+        <!-- Recently Added Services Section -->
+        <section class="featured-services">
+            <h2>Recently Added Services</h2>
+            <p class="section-subtitle">Latest services added to our platform</p>
+            <ul id="recentServiceList" class="service-grid"></ul>
+            <p id="noRecentResults" style="display:none; text-align: center; color: #666; padding: 20px;">
+                No recent services found.
+            </p>
+        </section>
+
+<section class="featured-services" id="allServicesSection">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>All Services</h2>
+        <a href="browse.html" class="primary-btn">Browse All Services →</a>
+    </div>
+    <ul id="serviceList" class="service-grid"></ul>
+    <p id="noResults" style="display:none;">No services found</p>
+</section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 NDIS Service Finder. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

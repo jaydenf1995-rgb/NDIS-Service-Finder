@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NDIS News & Resources - NDIS Service Finder</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <div class="container">
+        <div class="header-content">
+            <h1>NDIS Service Finder</h1>
+            <p class="slogan">Help at your fingertips</p>
+        </div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="add.html">Add a Service</a>
+            <a href="blog.html">News & Resources</a>
+        </nav>
+    </div>
+</header>
+
+<main class="container">
+    <section class="blog-header">
+        <h1>NDIS News & Resources</h1>
+        <p>Stay informed with the latest NDIS updates, helpful resources, and community news.</p>
+    </section>
+
+    <!-- Newsletter Subscription -->
+    <section class="newsletter-section">
+        <div class="newsletter-card">
+            <h2>📬 Stay Updated</h2>
+            <p>Subscribe to our newsletter for the latest NDIS news and new services in your area.</p>
+            <form id="newsletterForm" class="newsletter-form">
+                <input type="email" id="newsletterEmail" placeholder="Enter your email" required>
+                <button type="submit">Subscribe</button>
+            </form>
+            <p id="newsletterMessage" style="margin-top: 10px;"></p>
+        </div>
+    </section>
+
+    <!-- Featured Articles -->
+    <section class="articles-section">
+        <h2>Featured Articles</h2>
+        <div class="articles-grid">
+            <article class="article-card">
+                <div class="article-image" style="background: linear-gradient(135deg, var(--color-1) 0%, var(--color-4) 100%);"></div>
+                <div class="article-content">
+                    <h3>Understanding Your NDIS Plan</h3>
+                    <p class="article-meta">Posted on January 15, 2025 • 5 min read</p>
+                    <p>Learn how to make the most of your NDIS plan and understand your funding categories.</p>
+                    <a href="#" class="read-more">Read More →</a>
+                </div>
+            </article>
+
+            <article class="article-card">
+                <div class="article-image" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);"></div>
+                <div class="article-content">
+                    <h3>Finding the Right Support Worker</h3>
+                    <p class="article-meta">Posted on January 10, 2025 • 4 min read</p>
+                    <p>Tips for choosing a support worker that matches your needs and personality.</p>
+                    <a href="#" class="read-more">Read More →</a>
+                </div>
+            </article>
+
+            <article class="article-card">
+                <div class="article-image" style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);"></div>
+                <div class="article-content">
+                    <h3>NDIS Price Guide Updates 2025</h3>
+                    <p class="article-meta">Posted on January 5, 2025 • 6 min read</p>
+                    <p>Latest changes to the NDIS price guide and what it means for participants.</p>
+                    <a href="#" class="read-more">Read More →</a>
+                </div>
+            </article>
+
+            <article class="article-card">
+                <div class="article-image" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);"></div>
+                <div class="article-content">
+                    <h3>Community Participation Ideas</h3>
+                    <p class="article-meta">Posted on December 28, 2024 • 3 min read</p>
+                    <p>Creative ways to use your core supports for community participation.</p>
+                    <a href="#" class="read-more">Read More →</a>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- Resources Section -->
+    <section class="resources-section">
+        <h2>Helpful Resources</h2>
+        <div class="resources-grid">
+            <div class="resource-card">
+                <h3>📋 NDIS Forms & Templates</h3>
+                <p>Downloadable forms and templates for service agreements and planning.</p>
+                <a href="#" class="resource-link">Download Resources</a>
+            </div>
+
+            <div class="resource-card">
+                <h3>📞 Support Services</h3>
+                <p>Contact information for advocacy services and NDIS support.</p>
+                <a href="#" class="resource-link">View Contacts</a>
+            </div>
+
+            <div class="resource-card">
+                <h3>🎓 Training & Workshops</h3>
+                <p>Upcoming workshops and training sessions for participants and providers.</p>
+                <a href="#" class="resource-link">View Schedule</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2025 NDIS Service Finder. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+// Newsletter subscription
+document.getElementById('newsletterForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('newsletterEmail').value;
+    const messageEl = document.getElementById('newsletterMessage');
+    const button = e.target.querySelector('button');
+    
+    button.disabled = true;
+    button.textContent = 'Subscribing...';
+    
+    try {
+        const response = await fetch('/api/subscribe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            messageEl.textContent = result.message;
+            messageEl.style.color = 'green';
+            e.target.reset();
+        } else {
+            messageEl.textContent = result.error;
+            messageEl.style.color = 'red';
+        }
+    } catch (error) {
+        messageEl.textContent = 'Network error. Please try again.';
+        messageEl.style.color = 'red';
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Subscribe';
+    }
+});
+</script>
+</body>
+</html>

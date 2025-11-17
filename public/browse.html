@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Browse All Services - NDIS Service Finder</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1>NDIS Service Finder</h1>
+                <p class="slogan">Help at your fingertips</p>
+            </div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="browse.html">Browse Services</a>
+                <a href="add.html">Add a Service</a>
+                <a href="blog.html">News & Resources</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="dashboard.html" id="dashboardLink" style="display: none;">My Dashboard</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="browse-header">
+            <h1>Browse All Services</h1>
+            <p>Explore our complete directory of NDIS service providers</p>
+        </section>
+
+        <!-- Search and Filters -->
+        <div class="search-section">
+            <input type="text" id="searchBox" placeholder="Search services by name, location, or description...">
+            
+            <div class="filter-toggle">
+                <button id="filterToggle">📍 Advanced Filters</button>
+            </div>
+
+            <div class="advanced-filters" id="advancedFilters" style="display: none;">
+                <div class="filter-group">
+                    <label>Service Categories:</label>
+                    <div class="checkbox-grid">
+                        <label><input type="checkbox" name="category" value="SIL Provider"> SIL Provider</label>
+                        <label><input type="checkbox" name="category" value="Support Worker"> Support Worker</label>
+                        <label><input type="checkbox" name="category" value="Support Coordinator"> Support Coordinator</label>
+                        <label><input type="checkbox" name="category" value="Allied Health Professional"> Allied Health</label>
+                        <label><input type="checkbox" name="category" value="Occupational Therapist"> OT</label>
+                        <label><input type="checkbox" name="category" value="Physiotherapist"> Physio</label>
+                        <label><input type="checkbox" name="category" value="Offers Day Programs"> Day Programs</label>
+                        <label><input type="checkbox" name="category" value="Independent Worker"> Independent Worker</label>
+                        <label><input type="checkbox" name="category" value="Respite"> Respite</label>
+                    </div>
+                </div>
+
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="registeredFilter">NDIS Registered:</label>
+                        <select id="registeredFilter">
+                            <option value="">Any</option>
+                            <option value="Yes">Yes - Registered</option>
+                            <option value="No">No - Not Registered</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="sortBy">Sort By:</label>
+                        <select id="sortBy">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="name">Name A-Z</option>
+                            <option value="rating">Highest Rated</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button id="applyFilters" class="primary-btn">Apply Filters</button>
+                    <button id="resetFilters" class="secondary-btn">Reset Filters</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Filter Chips -->
+        <div class="category-chips">
+            <button class="chip active" data-category="">All Services</button>
+            <button class="chip" data-category="Support Worker">Support Workers</button>
+            <button class="chip" data-category="SIL Provider">SIL Providers</button>
+            <button class="chip" data-category="Support Coordinator">Coordinators</button>
+            <button class="chip" data-category="Allied Health Professional">Allied Health</button>
+            <button class="chip" data-category="Occupational Therapist">OT</button>
+            <button class="chip" data-category="Physiotherapist">Physio</button>
+            <button class="chip" data-category="Offers Day Programs">Day Programs</button>
+            <button class="chip" data-category="Respite">Respite</button>
+        </div>
+
+        <!-- Search Meta Info -->
+        <div class="search-meta">
+            <div class="results-count">
+                Showing <span id="resultsCount">0</span> services
+            </div>
+            <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+                <span class="loading"></span> Searching...
+            </div>
+        </div>
+
+        <!-- Services Grid -->
+        <section class="featured-services">
+            <ul id="serviceList" class="service-grid"></ul>
+            <p id="noResults" style="display:none;">No services found. Try adjusting your search filters.</p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 NDIS Service Finder. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Browse page specific functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load all services on page load
+            browseServices();
+            
+            // Setup search and filters
+            document.getElementById("searchBox")?.addEventListener("input", browseServices);
+            setupAdvancedFilters();
+            
+            // Check login status
+            checkLoginStatus();
+        });
+
+        async function browseServices() {
+            const queryInput = document.getElementById("searchBox");
+            const list = document.getElementById("serviceList");
+            const noResults = document.getElementById("noResults");
+            const resultsCount = document.getElementById("resultsCount");
+            const loadingIndicator = document.getElementById("loadingIndicator");
+
+            if (!list) return;
+
+            // Show loading state
+            if (loadingIndicator) loadingIndicator.style.display = 'flex';
+            if (resultsCount) resultsCount.textContent = '0';
+
+            const query = (queryInput?.value || "").toLowerCase();
+
+            try {
+                // Show skeleton loading
+                showSkeletonLoading(list);
+
+                let res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                let services = await res.json();
+
+                // Apply advanced filters
+                services = applyAdvancedFilters(services);
+
+                // Update results count
+                if (resultsCount) resultsCount.textContent = services.length;
+
+                // Clear and populate results
+                list.innerHTML = "";
+                
+                if (!services.length) {
+                    if (noResults) noResults.style.display = "block";
+                    return;
+                }
+
+                if (noResults) noResults.style.display = "none";
+
+                // Show all filtered results (without upgrade buttons for public)
+                services.forEach(s => {
+                    const li = createServiceCard(s, false); // false = don't show upgrade button
+                    list.appendChild(li);
+                });
+
+            } catch (err) {
+                console.error("Search error:", err);
+                if (resultsCount) resultsCount.textContent = '0';
+            } finally {
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+            }
+        }
+
+        function checkLoginStatus() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            const loginLink = document.getElementById('loginLink');
+            const dashboardLink = document.getElementById('dashboardLink');
+            
+            if (currentUser) {
+                loginLink.style.display = 'none';
+                dashboardLink.style.display = 'inline';
+                dashboardLink.innerHTML = `👤 ${currentUser.name}`;
+            }
+        }
+    </script>
+</body>
+</html>

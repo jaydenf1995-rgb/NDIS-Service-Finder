@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Service Details - NDIS Service Finder</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <div class="container">
+        <div class="header-content">
+            <h1>NDIS Service Finder</h1>
+            <p class="slogan">Help at your fingertips</p>
+        </div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="add.html">Add a Service</a>
+            <a href="blog.html">News & Resources</a>
+        </nav>
+    </div>
+</header>
+
+<main class="container">
+    <section class="service-details">
+        <div id="serviceContent">
+            <h2 id="serviceName">Loading...</h2>
+            <p id="serviceDescription"></p>
+            
+            <div class="service-meta">
+                <p><strong>Location:</strong> <span id="serviceLocation"></span></p>
+                <p><strong>Category:</strong> <span id="serviceCategory"></span></p>
+                <p><strong>Address:</strong> <span id="serviceAddress"></span></p>
+                <p><strong>Phone:</strong> <span id="servicePhone"></span></p>
+                <p><strong>Email:</strong> <span id="serviceEmail"></span></p>
+                <div class="rating-display">
+                    <strong>Rating:</strong> 
+                    <span id="serviceRating">No reviews yet</span>
+                    <span id="reviewCount"></span>
+                </div>
+            </div>
+
+            <!-- Quick Contact Buttons -->
+            <div class="quick-contact-large">
+                <a id="callBtn" href="#" class="contact-btn-large">📞 Call Now</a>
+                <a id="emailBtn" href="#" class="contact-btn-large">✉️ Email</a>
+                <a id="mapBtn" href="#" class="contact-btn-large">📍 Get Directions</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reviews Section -->
+    <section class="reviews-section">
+        <h2>Reviews & Ratings</h2>
+        
+        <!-- Add Review Form -->
+        <div class="add-review-form">
+            <h3>Add Your Review</h3>
+            <form id="reviewForm">
+                <div class="form-group">
+                    <label for="reviewAuthor">Your Name (optional):</label>
+                    <input type="text" id="reviewAuthor" placeholder="Anonymous">
+                </div>
+                
+                <div class="form-group">
+                    <label>Rating:</label>
+                    <div class="star-rating">
+                        <input type="radio" id="star5" name="rating" value="5">
+                        <label for="star5">★</label>
+                        <input type="radio" id="star4" name="rating" value="4">
+                        <label for="star4">★</label>
+                        <input type="radio" id="star3" name="rating" value="3">
+                        <label for="star3">★</label>
+                        <input type="radio" id="star2" name="rating" value="2">
+                        <label for="star2">★</label>
+                        <input type="radio" id="star1" name="rating" value="1">
+                        <label for="star1">★</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reviewComment">Your Review:</label>
+                    <textarea id="reviewComment" placeholder="Share your experience with this service..." rows="4" required></textarea>
+                </div>
+                
+                <button type="submit">Submit Review</button>
+                <p id="reviewMessage" style="margin-top: 10px;"></p>
+            </form>
+        </div>
+
+        <!-- Reviews List -->
+        <div id="reviewsList" class="reviews-list">
+            <!-- Reviews will be loaded here -->
+        </div>
+    </section>
+
+    <a href="index.html" class="back-link">← Back to search</a>
+</main>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2025 NDIS Service Finder. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+async function loadService() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    if (!id) {
+        document.getElementById("serviceName").textContent = "No service selected";
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/service/${id}`);
+        if (!res.ok) throw new Error("Service not found");
+
+        const service = await res.json();
+
+        // Add photo if exists
+        if (service.photo) {
+            const img = document.createElement("img");
+            img.src = service.photo;
+            img.alt = service.name;
+            img.style.width = "150px";
+            img.style.height = "150px";
+            img.style.borderRadius = "50%";
+            img.style.objectFit = "cover";
+            img.style.marginBottom = "15px";
+            document.querySelector(".service-details").prepend(img);
+        }
+
+        // Populate fields safely
+        document.getElementById("serviceName").textContent = service.name || "N/A";
+        document.getElementById("serviceDescription").textContent = service.description || "No description provided.";
+        document.getElementById("serviceLocation").textContent = service.location || "N/A";
+        document.getElementById("serviceCategory").textContent = (service.category || []).join(", ") || "N/A";
+        document.getElementById("serviceAddress").textContent = service.address || "N/A";
+        document.getElementById("servicePhone").textContent = service.phone || "N/A";
+        document.getElementById("serviceEmail").textContent = service.email || "N/A";
+
+        // Update rating
+        if (service.averageRating > 0) {
+            document.getElementById("serviceRating").innerHTML = 
+                `${'★'.repeat(Math.round(service.averageRating))}${'☆'.repeat(5-Math.round(service.averageRating))} ${service.averageRating}/5`;
+            document.getElementById("reviewCount").textContent = `(${service.reviewCount} reviews)`;
+        }
+
+        // Setup contact buttons
+        const callBtn = document.getElementById('callBtn');
+        const emailBtn = document.getElementById('emailBtn');
+        const mapBtn = document.getElementById('mapBtn');
+
+        if (service.phone) {
+            callBtn.href = `tel:${service.phone}`;
+        } else {
+            callBtn.style.display = 'none';
+        }
+
+        if (service.email) {
+            emailBtn.href = `mailto:${service.email}`;
+        } else {
+            emailBtn.style.display = 'none';
+        }
+
+        if (service.address) {
+            mapBtn.href = `https://maps.google.com/?q=${encodeURIComponent(service.address)}`;
+        } else {
+            mapBtn.style.display = 'none';
+        }
+
+        // Load reviews
+        loadReviews(id);
+
+    } catch (err) {
+        document.getElementById("serviceName").textContent = "Service not found";
+        console.error(err);
+    }
+}
+
+async function loadReviews(serviceId) {
+    try {
+        const res = await fetch(`/api/service/${serviceId}/reviews`);
+        const reviews = await res.json();
+
+        const reviewsList = document.getElementById('reviewsList');
+        
+        if (reviews.length === 0) {
+            reviewsList.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to review this service!</p>';
+            return;
+        }
+
+        reviewsList.innerHTML = reviews.map(review => `
+            <div class="review-item">
+                <div class="review-header">
+                    <strong>${review.author}</strong>
+                    <span class="review-date">${new Date(review.date).toLocaleDateString()}</span>
+                </div>
+                <div class="review-rating">
+                    ${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}
+                </div>
+                <p class="review-comment">${review.comment}</p>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error('Error loading reviews:', err);
+    }
+}
+
+// Handle review submission
+document.getElementById('reviewForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const params = new URLSearchParams(window.location.search);
+    const serviceId = params.get("id");
+    const author = document.getElementById('reviewAuthor').value || 'Anonymous';
+    const rating = document.querySelector('input[name="rating"]:checked');
+    const comment = document.getElementById('reviewComment').value;
+    const messageEl = document.getElementById('reviewMessage');
+    const button = e.target.querySelector('button');
+
+    if (!rating) {
+        messageEl.textContent = 'Please select a rating';
+        messageEl.style.color = 'red';
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Submitting...';
+
+    try {
+        const response = await fetch(`/api/service/${serviceId}/reviews`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                author: author,
+                rating: parseInt(rating.value),
+                comment: comment
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            messageEl.textContent = result.message;
+            messageEl.style.color = 'green';
+            e.target.reset();
+            // Reload reviews
+            loadReviews(serviceId);
+            // Reload service to update rating
+            loadService();
+        } else {
+            messageEl.textContent = result.error;
+            messageEl.style.color = 'red';
+        }
+    } catch (error) {
+        messageEl.textContent = 'Network error. Please try again.';
+        messageEl.style.color = 'red';
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Submit Review';
+    }
+});
+
+// Load service details on page load
+document.addEventListener("DOMContentLoaded", loadService);
+</script>
+</body>
+</html>

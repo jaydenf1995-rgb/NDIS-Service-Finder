@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add a Service - NDIS Service Finder</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .form-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--color-2);
+        }
+        
+        .form-tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .form-tab.active {
+            color: var(--color-4);
+            border-bottom-color: var(--color-4);
+        }
+        
+        .form-section {
+            display: none;
+        }
+        
+        .form-section.active {
+            display: block;
+        }
+        
+        .login-prompt {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .account-benefits {
+            background: var(--color-3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .benefit-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .benefit-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .benefit-icon {
+            color: var(--color-4);
+            font-weight: bold;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1>NDIS Service Finder</h1>
+                <p class="slogan">Help at your fingertips</p>
+            </div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="browse.html">Browse Services</a>
+                <a href="add.html">Add a Service</a>
+                <a href="blog.html">News & Resources</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="dashboard.html" id="dashboardLink" style="display: none;">My Dashboard</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="form-section active">
+            <h2>Add Your Service</h2>
+            <p>List your service to reach people looking for NDIS support in your area.</p>
+
+            <!-- Login Prompt for returning users -->
+            <div id="loginPrompt" class="login-prompt">
+                <strong>Already have an account?</strong> 
+                <a href="login.html">Login here</a> to manage your existing services.
+            </div>
+
+            <!-- Account Benefits -->
+            <div class="account-benefits">
+                <h3>🌟 Why Create an Account?</h3>
+                <ul class="benefit-list">
+                    <li><span class="benefit-icon">✓</span> Manage and edit your services anytime</li>
+                    <li><span class="benefit-icon">✓</span> Upgrade to premium for better visibility</li>
+                    <li><span class="benefit-icon">✓</span> Track reviews and ratings</li>
+                    <li><span class="benefit-icon">✓</span> Receive notifications about your listing</li>
+                    <li><span class="benefit-icon">✓</span> Add multiple services with one account</li>
+                </ul>
+            </div>
+
+            <!-- Form Tabs -->
+            <div class="form-tabs">
+                <button class="form-tab active" onclick="showFormSection('accountInfo')">1. Account Information</button>
+                <button class="form-tab" onclick="showFormSection('serviceInfo')">2. Service Details</button>
+            </div>
+
+            <!-- Account Information Section -->
+            <div id="accountInfo" class="form-section active">
+                <form id="accountForm">
+                    <h3>Your Account Information</h3>
+                    <p>Create an account to manage your service (or <a href="login.html">login if you already have one</a>)</p>
+                    
+                    <div class="form-group">
+                        <label for="userName">Your Name:</label>
+                        <input type="text" id="userName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userEmail">Email Address:</label>
+                        <input type="email" id="userEmail" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userPhone">Phone Number:</label>
+                        <input type="tel" id="userPhone">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userPassword">Password:</label>
+                        <input type="password" id="userPassword" required minlength="6">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password:</label>
+                        <input type="password" id="confirmPassword" required>
+                    </div>
+                    
+                    <button type="submit" class="primary-btn">Continue to Service Details →</button>
+                    <p id="accountMessage" style="margin-top: 10px;"></p>
+                </form>
+            </div>
+
+            <!-- Service Information Section -->
+            <div id="serviceInfo" class="form-section">
+                <form id="serviceForm" enctype="multipart/form-data">
+                    <h3>Service Details</h3>
+                    <p>Tell us about your service</p>
+                    
+                    <div class="form-group">
+                        <label for="serviceName">Service Name:</label>
+                        <input type="text" id="serviceName" required placeholder="e.g., Quality Support Services">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="serviceLocation">Service Location/Area:</label>
+                        <input type="text" id="serviceLocation" required placeholder="e.g., Sydney, NSW">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Service Categories:</label>
+                        <div class="checkbox-grid">
+                            <label><input type="checkbox" name="category" value="SIL Provider"> SIL Provider</label>
+                            <label><input type="checkbox" name="category" value="Support Worker"> Support Worker</label>
+                            <label><input type="checkbox" name="category" value="Support Coordinator"> Support Coordinator</label>
+                            <label><input type="checkbox" name="category" value="Allied Health Professional"> Allied Health Professional</label>
+                            <label><input type="checkbox" name="category" value="Occupational Therapist"> Occupational Therapist</label>
+                            <label><input type="checkbox" name="category" value="Physiotherapist"> Physiotherapist</label>
+                            <label><input type="checkbox" name="category" value="Offers Day Programs"> Offers Day Programs</label>
+                            <label><input type="checkbox" name="category" value="Independent Worker"> Independent Worker</label>
+                            <label><input type="checkbox" name="category" value="Respite"> Respite</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Are you a registered NDIS provider?</label>
+                        <div class="radio-inline">
+                            <label><input type="radio" name="registered" value="Yes" required> Yes</label>
+                            <label><input type="radio" name="registered" value="No" required> No</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="serviceDescription">Service Description:</label>
+                        <textarea id="serviceDescription" rows="4" placeholder="Describe your service, experience, and what makes you unique..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="serviceAddress">Service Address (optional):</label>
+                        <input type="text" id="serviceAddress" placeholder="Full address for mapping">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="servicePhone">Service Phone Number:</label>
+                        <input type="tel" id="servicePhone" placeholder="Phone number for your service">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="servicePhoto">Service Photo (optional):</label>
+                        <input type="file" id="servicePhoto" accept="image/*">
+                        <small>Upload a logo or photo that represents your service</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="secondary-btn" onclick="showFormSection('accountInfo')">← Back to Account</button>
+                        <button type="submit" class="primary-btn">Submit Service for Approval</button>
+                    </div>
+                    <p id="serviceMessage" style="margin-top: 10px;"></p>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 NDIS Service Finder. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        let accountData = {}; // Store account info between steps
+        
+        // Check if user is already logged in
+        function checkLoginStatus() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            const loginLink = document.getElementById('loginLink');
+            const dashboardLink = document.getElementById('dashboardLink');
+            const loginPrompt = document.getElementById('loginPrompt');
+            
+            if (currentUser) {
+                // User is logged in - pre-fill account info and skip account step
+                loginLink.style.display = 'none';
+                dashboardLink.style.display = 'inline';
+                dashboardLink.innerHTML = `👤 ${currentUser.name}`;
+                loginPrompt.style.display = 'none';
+                
+                accountData = {
+                    name: currentUser.name,
+                    email: currentUser.email,
+                    phone: currentUser.phone
+                };
+                
+                // Skip to service details
+                showFormSection('serviceInfo');
+            }
+        }
+        
+        // Form section navigation
+        function showFormSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.form-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName).classList.add('active');
+            document.querySelector(`.form-tab[onclick="showFormSection('${sectionName}')"]`).classList.add('active');
+        }
+        
+        // Handle account form submission
+        document.getElementById('accountForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const phone = document.getElementById('userPhone').value;
+            const password = document.getElementById('userPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageEl = document.getElementById('accountMessage');
+            const button = e.target.querySelector('button');
+            
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                messageEl.textContent = 'Passwords do not match!';
+                messageEl.style.color = 'red';
+                return;
+            }
+            
+            // Validate password length
+            if (password.length < 6) {
+                messageEl.textContent = 'Password must be at least 6 characters long!';
+                messageEl.style.color = 'red';
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Creating Account...';
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        name, 
+                        email, 
+                        phone, 
+                        password 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    messageEl.textContent = result.message;
+                    messageEl.style.color = 'green';
+                    
+                    // Store account data for service submission
+                    accountData = { name, email, phone };
+                    
+                    // Auto-login the user
+                    const loginResponse = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
+                    
+                    const loginResult = await loginResponse.json();
+                    
+                    if (loginResponse.ok) {
+                        localStorage.setItem('currentUser', JSON.stringify(loginResult.user));
+                        checkLoginStatus(); // Update UI
+                        
+                        // Move to service details after a brief delay
+                        setTimeout(() => {
+                            showFormSection('serviceInfo');
+                        }, 1000);
+                    }
+                    
+                } else {
+                    messageEl.textContent = result.error;
+                    messageEl.style.color = 'red';
+                }
+                
+            } catch (error) {
+                messageEl.textContent = 'Network error. Please try again.';
+                messageEl.style.color = 'red';
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Continue to Service Details →';
+            }
+        });
+        
+        // Handle service form submission
+        document.getElementById('serviceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            const messageEl = document.getElementById('serviceMessage');
+            const button = e.target.querySelector('button[type="submit"]');
+            
+            // Check if user is logged in
+            if (!currentUser && !accountData.email) {
+                messageEl.textContent = 'Please complete the account information first.';
+                messageEl.style.color = 'red';
+                showFormSection('accountInfo');
+                return;
+            }
+            
+            const serviceEmail = currentUser ? currentUser.email : accountData.email;
+            
+            button.disabled = true;
+            button.textContent = 'Submitting Service...';
+            
+            try {
+                const formData = new FormData();
+                
+                // Add service data
+                formData.append('name', document.getElementById('serviceName').value);
+                formData.append('location', document.getElementById('serviceLocation').value);
+                formData.append('description', document.getElementById('serviceDescription').value);
+                formData.append('address', document.getElementById('serviceAddress').value);
+                formData.append('phone', document.getElementById('servicePhone').value);
+                formData.append('email', serviceEmail);
+                formData.append('registered', document.querySelector('input[name="registered"]:checked').value);
+                
+                // Add categories
+                const categories = Array.from(document.querySelectorAll('input[name="category"]:checked'))
+                    .map(cb => cb.value);
+                categories.forEach(cat => formData.append('category', cat));
+                
+                // Add photo if selected
+                const photoInput = document.getElementById('servicePhoto');
+                if (photoInput.files[0]) {
+                    formData.append('photo', photoInput.files[0]);
+                }
+                
+                const response = await fetch('/api/add', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    messageEl.textContent = result.message;
+                    messageEl.style.color = 'green';
+                    
+                    // Clear form
+                    document.getElementById('serviceForm').reset();
+                    
+                    // Show success message and redirect option
+                    setTimeout(() => {
+                        if (confirm('Service submitted successfully! Would you like to go to your dashboard to manage your services?')) {
+                            window.location.href = 'dashboard.html';
+                        } else {
+                            // Reset to account info for new submission
+                            showFormSection('accountInfo');
+                            document.getElementById('accountForm').reset();
+                        }
+                    }, 1000);
+                    
+                } else {
+                    messageEl.textContent = result.error || 'Failed to submit service. Please try again.';
+                    messageEl.style.color = 'red';
+                }
+                
+            } catch (error) {
+                console.error('Submission error:', error);
+                messageEl.textContent = 'Network error. Please check your connection and try again.';
+                messageEl.style.color = 'red';
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Submit Service for Approval';
+            }
+        });
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', checkLoginStatus);
+    </script>
+</body>
+</html>
