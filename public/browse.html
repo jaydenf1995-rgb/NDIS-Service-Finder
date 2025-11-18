@@ -15,11 +15,8 @@
             <nav>
                 <a href="index.html">Home</a>
                 <a href="browse.html">Browse Services</a>
-                <a href="https://forms.gle/k52cthQPL88q7uDY8" target="_blank" class=add-service-btn">
-        Add Your Service
-    </a>
+                <a href="https://forms.gle/k52cthQPL88q7uDY8" target="_blank">Add Your Service</a>
                 <a href="blog.html">News & Resources</a>
-                <a href="dashboard.html" id="dashboardLink" style="display: none;">My Dashboard</a>
             </nav>
         </div>
     </header>
@@ -70,7 +67,6 @@
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
                             <option value="name">Name A-Z</option>
-                            <option value="rating">Highest Rated</option>
                         </select>
                     </div>
                 </div>
@@ -108,7 +104,9 @@
         <!-- Services Grid -->
         <section class="featured-services">
             <ul id="serviceList" class="service-grid"></ul>
-            <p id="noResults" style="display:none;">No services found. Try adjusting your search filters.</p>
+            <p id="noResults" style="display:none; text-align: center; color: #666; padding: 20px;">
+                No services found. Try adjusting your search filters.
+            </p>
         </section>
     </main>
 
@@ -119,86 +117,5 @@
     </footer>
 
     <script src="script.js"></script>
-    <script>
-        // Browse page specific functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load all services on page load
-            browseServices();
-            
-            // Setup search and filters
-            document.getElementById("searchBox")?.addEventListener("input", browseServices);
-            setupAdvancedFilters();
-            
-            // Check login status
-            checkLoginStatus();
-        });
-
-        async function browseServices() {
-            const queryInput = document.getElementById("searchBox");
-            const list = document.getElementById("serviceList");
-            const noResults = document.getElementById("noResults");
-            const resultsCount = document.getElementById("resultsCount");
-            const loadingIndicator = document.getElementById("loadingIndicator");
-
-            if (!list) return;
-
-            // Show loading state
-            if (loadingIndicator) loadingIndicator.style.display = 'flex';
-            if (resultsCount) resultsCount.textContent = '0';
-
-            const query = (queryInput?.value || "").toLowerCase();
-
-            try {
-                // Show skeleton loading
-                showSkeletonLoading(list);
-
-                let res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-                let services = await res.json();
-
-                // Apply advanced filters
-                services = applyAdvancedFilters(services);
-
-                // Update results count
-                if (resultsCount) resultsCount.textContent = services.length;
-
-                // Clear and populate results
-                list.innerHTML = "";
-                
-                if (!services.length) {
-                    if (noResults) noResults.style.display = "block";
-                    return;
-                }
-
-                if (noResults) noResults.style.display = "none";
-
-                // Show all filtered results (without upgrade buttons for public)
-                services.forEach(s => {
-                    const li = createServiceCard(s, false); // false = don't show upgrade button
-                    list.appendChild(li);
-                });
-
-            } catch (err) {
-                console.error("Search error:", err);
-                if (resultsCount) resultsCount.textContent = '0';
-            } finally {
-                if (loadingIndicator) loadingIndicator.style.display = 'none';
-            }
-        }
-
-        function checkLoginStatus() {
-            const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-            const loginLink = document.getElementById('loginLink');
-            const dashboardLink = document.getElementById('dashboardLink');
-            
-            if (currentUser) {
-                loginLink.style.display = 'none';
-                dashboardLink.style.display = 'inline';
-                dashboardLink.innerHTML = `👤 ${currentUser.name}`;
-            }
-        }
-    </script>
 </body>
-
 </html>
-
-
