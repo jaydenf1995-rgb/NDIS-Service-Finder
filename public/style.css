@@ -1432,4 +1432,18 @@ button:hover {
     margin-bottom: 20px;
     text-align: center;
     font-style: italic;
+
+}
+.add-service-btn {
+  background-color: #2563eb; /* Nice blue color */
+  color: white;
+  padding: 10px 20px;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.add-service-btn:hover {
+  background-color: #1d4ed8; /* Darker blue on hover */
 }
