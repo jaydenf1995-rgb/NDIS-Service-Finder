@@ -74,16 +74,20 @@ const sampleServices = [
     }
 ];
 
+// Global variables for filters
+let currentFilters = {
+    searchQuery: '',
+    categories: [],
+    registered: '',
+    sortBy: 'newest'
+};
+
 // Function to update the statistics
 function updateStatistics() {
-    // Count ALL services, not just recent ones
     const totalServices = sampleServices.length;
-    
-    // Count unique locations (suburbs) from ALL services
     const uniqueLocations = new Set(sampleServices.map(service => service.location));
     const totalLocations = uniqueLocations.size;
     
-    // Update the statistics display
     document.getElementById('totalServices').textContent = `${totalServices}`;
     document.getElementById('totalLocations').textContent = `${totalLocations}`;
 }
@@ -91,7 +95,6 @@ function updateStatistics() {
 function createServiceCard(service) {
     const li = document.createElement('li');
     
-    // Use a placeholder if no photo is available
     const photoUrl = service.photo || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop';
     
     li.innerHTML = `
@@ -111,7 +114,6 @@ function createServiceCard(service) {
         <button class="favorite-btn">♡</button>
     `;
     
-    // Add favorite button functionality
     const favoriteBtn = li.querySelector('.favorite-btn');
     favoriteBtn.addEventListener('click', function() {
         this.classList.toggle('favorited');
@@ -121,69 +123,229 @@ function createServiceCard(service) {
     return li;
 }
 
-// Function to display services AND update statistics (for home page)
+// Filter and search functions
+function filterServices() {
+    let filteredServices = [...sampleServices];
+    
+    // Search filter
+    if (currentFilters.searchQuery) {
+        const query = currentFilters.searchQuery.toLowerCase();
+        filteredServices = filteredServices.filter(service => 
+            service.name.toLowerCase().includes(query) ||
+            service.description.toLowerCase().includes(query) ||
+            service.location.toLowerCase().includes(query) ||
+            service.category.toLowerCase().includes(query)
+        );
+    }
+    
+    // Category filter
+    if (currentFilters.categories.length > 0) {
+        filteredServices = filteredServices.filter(service =>
+            currentFilters.categories.includes(service.category)
+        );
+    }
+    
+    // Registered filter
+    if (currentFilters.registered) {
+        filteredServices = filteredServices.filter(service =>
+            service.isRegistered === currentFilters.registered
+        );
+    }
+    
+    // Sort results
+    filteredServices = sortServices(filteredServices, currentFilters.sortBy);
+    
+    return filteredServices;
+}
+
+function sortServices(services, sortBy) {
+    switch (sortBy) {
+        case 'newest':
+            return services.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+        case 'oldest':
+            return services.sort((a, b) => new Date(a.dateAdded) - new Date(b.dateAdded));
+        case 'name':
+            return services.sort((a, b) => a.name.localeCompare(b.name));
+        default:
+            return services;
+    }
+}
+
+function displayFilteredServices(services) {
+    const serviceList = document.getElementById('serviceList');
+    const resultsCount = document.getElementById('resultsCount');
+    const noResults = document.getElementById('noResults');
+    
+    if (serviceList) {
+        serviceList.innerHTML = '';
+        
+        services.forEach(service => {
+            const serviceItem = createServiceCard(service);
+            serviceList.appendChild(serviceItem);
+        });
+        
+        if (resultsCount) {
+            resultsCount.textContent = services.length;
+        }
+        
+        if (noResults) {
+            noResults.style.display = services.length === 0 ? 'block' : 'none';
+        }
+    }
+}
+
+// Setup search and filter event listeners
+function setupSearchAndFilters() {
+    // Search box
+    const searchBox = document.getElementById('searchBox');
+    if (searchBox) {
+        searchBox.addEventListener('input', function(e) {
+            currentFilters.searchQuery = e.target.value;
+            const filteredServices = filterServices();
+            displayFilteredServices(filteredServices);
+        });
+    }
+    
+    // Category checkboxes
+    const categoryCheckboxes = document.querySelectorAll('input[name="category"]');
+    categoryCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            currentFilters.categories = Array.from(categoryCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+            const filteredServices = filterServices();
+            displayFilteredServices(filteredServices);
+        });
+    });
+    
+    // Registered filter
+    const registeredFilter = document.getElementById('registeredFilter');
+    if (registeredFilter) {
+        registeredFilter.addEventListener('change', function(e) {
+            currentFilters.registered = e.target.value;
+            const filteredServices = filterServices();
+            displayFilteredServices(filteredServices);
+        });
+    }
+    
+    // Sort by
+    const sortBy = document.getElementById('sortBy');
+    if (sortBy) {
+        sortBy.addEventListener('change', function(e) {
+            currentFilters.sortBy = e.target.value;
+            const filteredServices = filterServices();
+            displayFilteredServices(filteredServices);
+        });
+    }
+    
+    // Category chips
+    const categoryChips = document.querySelectorAll('.category-chips .chip');
+    categoryChips.forEach(chip => {
+        chip.addEventListener('click', function() {
+            // Remove active class from all chips
+            categoryChips.forEach(c => c.classList.remove('active'));
+            // Add active class to clicked chip
+            this.classList.add('active');
+            
+            const category = this.dataset.category;
+            if (category === '') {
+                // Clear category filter
+                currentFilters.categories = [];
+                categoryCheckboxes.forEach(cb => cb.checked = false);
+            } else {
+                // Set category filter
+                currentFilters.categories = [category];
+                categoryCheckboxes.forEach(cb => {
+                    cb.checked = cb.value === category;
+                });
+            }
+            
+            const filteredServices = filterServices();
+            displayFilteredServices(filteredServices);
+        });
+    });
+    
+    // Filter toggle
+    const filterToggle = document.getElementById('filterToggle');
+    const advancedFilters = document.getElementById('advancedFilters');
+    if (filterToggle && advancedFilters) {
+        filterToggle.addEventListener('click', function() {
+            const isVisible = advancedFilters.style.display !== 'none';
+            advancedFilters.style.display = isVisible ? 'none' : 'block';
+            this.textContent = isVisible ? '📍 Advanced Filters' : '📍 Hide Filters';
+        });
+    }
+    
+    // Reset filters
+    const resetFilters = document.getElementById('resetFilters');
+    if (resetFilters) {
+        resetFilters.addEventListener('click', function() {
+            // Reset all filters
+            currentFilters = {
+                searchQuery: '',
+                categories: [],
+                registered: '',
+                sortBy: 'newest'
+            };
+            
+            // Reset UI elements
+            if (searchBox) searchBox.value = '';
+            categoryCheckboxes.forEach(cb => cb.checked = false);
+            if (registeredFilter) registeredFilter.value = '';
+            if (sortBy) sortBy.value = 'newest';
+            
+            // Reset category chips
+            categoryChips.forEach((chip, index) => {
+                chip.classList.toggle('active', index === 0); // First chip (All Services) active
+            });
+            
+            // Show all services
+            displayFilteredServices(sampleServices);
+        });
+    }
+}
+
+// Home page functionality
 function displayServices() {
     const serviceList = document.getElementById('serviceList');
     const recentServiceList = document.getElementById('recentServiceList');
     const resultsCount = document.getElementById('resultsCount');
     
-    // Clear existing content
-    serviceList.innerHTML = '';
-    recentServiceList.innerHTML = '';
+    if (serviceList) serviceList.innerHTML = '';
+    if (recentServiceList) recentServiceList.innerHTML = '';
     
     // Add services to main list
     sampleServices.forEach(service => {
         const serviceItem = createServiceCard(service);
-        serviceList.appendChild(serviceItem);
+        if (serviceList) serviceList.appendChild(serviceItem);
     });
     
     // Add recent services (last 3)
     const recentServices = sampleServices.slice(0, 3);
     recentServices.forEach(service => {
         const serviceItem = createServiceCard(service);
-        recentServiceList.appendChild(serviceItem);
+        if (recentServiceList) recentServiceList.appendChild(serviceItem);
     });
     
-    // Update results count and statistics
-    resultsCount.textContent = sampleServices.length;
+    if (resultsCount) resultsCount.textContent = sampleServices.length;
     updateStatistics();
 }
 
 // Browse page functionality
 function setupBrowsePage() {
-    const serviceList = document.getElementById('serviceList');
-    const resultsCount = document.getElementById('resultsCount');
-    const noResults = document.getElementById('noResults');
-    
-    if (serviceList) {
-        // Clear existing content
-        serviceList.innerHTML = '';
-        
-        // Add ALL services to the browse page
-        sampleServices.forEach(service => {
-            const serviceItem = createServiceCard(service);
-            serviceList.appendChild(serviceItem);
-        });
-        
-        // Update results count
-        if (resultsCount) {
-            resultsCount.textContent = sampleServices.length;
-        }
-        
-        // Show/hide no results message
-        if (noResults) {
-            noResults.style.display = sampleServices.length === 0 ? 'block' : 'none';
-        }
-    }
+    // Display all services initially
+    displayFilteredServices(sampleServices);
+    // Setup search and filters
+    setupSearchAndFilters();
 }
 
 // Detect which page we're on and load appropriate content
 document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('recentServiceList')) {
-        // Home page - has recent services section
+        // Home page
         displayServices();
     } else if (document.getElementById('serviceList')) {
-        // Browse page - only has main service list
+        // Browse page
         setupBrowsePage();
     }
 });
