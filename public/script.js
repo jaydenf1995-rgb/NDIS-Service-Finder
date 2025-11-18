@@ -72,7 +72,8 @@ const sampleServices = [
         photo: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=400&h=300&fit=crop",
         email: "team@alliedhealth.com"
     },
-    {        id: 7,
+    {        
+        id: 7,
         name: "Jayden Farmer",
         category: "Support Coordination",
         description: "They call me Big Bird cause of my massive B..Bird",
@@ -411,4 +412,5 @@ document.addEventListener('DOMContentLoaded', function() {
         setupBrowsePage();
     }
 });
+
 
