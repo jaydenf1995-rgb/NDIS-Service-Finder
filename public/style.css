@@ -1635,3 +1635,38 @@ button:hover {
 .article-card.expanded {
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
+/* Official NDIS Resources Section */
+.ndis-links {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.large-btn {
+    display: inline-block;
+    padding: 15px 30px;
+    font-size: 1.1em;
+    margin-bottom: 20px;
+    text-decoration: none;
+}
+
+.additional-links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.additional-links .resource-link {
+    background: transparent;
+    color: var(--color-4);
+    border: 2px solid var(--color-4);
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+}
+
+.additional-links .resource-link:hover {
+    background: var(--color-4);
+    color: white;
+    transform: translateY(-2px);
+}
