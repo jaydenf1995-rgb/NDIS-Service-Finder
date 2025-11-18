@@ -13,16 +13,16 @@
                 <p class="slogan">Help at your fingertips</p>
             </div>
             <nav>
-    <a href="index.html">Home</a>
-    <a href="browse.html">Browse Services</a>
-    <a href="https://forms.gle/k52cthQPL88q7uDY8" target="_blank" class=add-service-btn">
-        Add Your Service
-    </a>
-    <a href="blog.html">News & Resources</a>
-    <a href="login.html" id="loginLink">Login</a>
-    <a href="dashboard.html" id="dashboardLink" style="display: none;">My Dashboard</a>
-    <a href="#" id="logoutBtn" style="display: none;">Logout</a>
-</nav>
+                <a href="index.html">Home</a>
+                <a href="browse.html">Browse Services</a>
+                <a href="https://forms.gle/k52cthQPL88q7uDY8" target="_blank" class="add-service-btn">
+                    Add Your Service
+                </a>
+                <a href="blog.html">News & Resources</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="dashboard.html" id="dashboardLink" style="display: none;">My Dashboard</a>
+                <a href="#" id="logoutBtn" style="display: none;">Logout</a>
+            </nav>
         </div>
     </header>
 
@@ -30,7 +30,7 @@
         <!-- Welcome Blurb -->
         <section class="welcome-blurb">
             <h2>Find Trusted NDIS Services in Your Area</h2>
-            <p>Our platform connects you with verified NDIS service providers, support workers, and allied health professionals. Whether you're looking for SIL providers, support coordination, or day programs, we make it easy to find the right services for your needs.</p>
+            <p>Our platform connects you with NDIS service providers, support workers, and allied health professionals. Whether you're looking for SIL providers, support coordination, or day programs, we make it easy to find the right services for your needs.</p>
             <p>Search below to discover services in your community or add your own service to help others find you!</p>
         </section>
 
@@ -126,16 +126,6 @@
             </div>
         </div>
 
-        <!-- Premium Services Section -->
-        <section class="featured-services">
-            <h2>⭐ Premium Services</h2>
-            <p class="section-subtitle">Featured services with enhanced visibility and premium benefits</p>
-            <ul id="premiumServiceList" class="service-grid"></ul>
-            <p id="noPremiumResults" style="display:none; text-align: center; color: #666; padding: 20px;">
-                No premium services available yet. <a href="premium.html">Be the first to upgrade!</a>
-            </p>
-        </section>
-
         <!-- Recently Added Services Section -->
         <section class="featured-services">
             <h2>Recently Added Services</h2>
@@ -146,14 +136,17 @@
             </p>
         </section>
 
-<section class="featured-services" id="allServicesSection">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2>All Services</h2>
-        <a href="browse.html" class="primary-btn">Browse All Services →</a>
-    </div>
-    <ul id="serviceList" class="service-grid"></ul>
-    <p id="noResults" style="display:none;">No services found</p>
-</section>
+        <!-- All Services Section -->
+        <section class="featured-services" id="allServicesSection">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>All Services</h2>
+                <a href="browse.html" class="primary-btn">Browse All Services →</a>
+            </div>
+            <ul id="serviceList" class="service-grid"></ul>
+            <p id="noResults" style="display:none; text-align: center; color: #666; padding: 20px;">
+                No services found. <a href="https://forms.gle/k52cthQPL88q7uDY8" target="_blank">Add your service</a> to be the first!
+            </p>
+        </section>
     </main>
 
     <footer>
@@ -164,5 +157,4 @@
 
     <script src="script.js"></script>
 </body>
-
 </html>
