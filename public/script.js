@@ -171,10 +171,11 @@ function sortServices(services, sortBy) {
     }
 }
 
-function displayFilteredServices(services) {
-    const serviceList = document.getElementById('serviceList');
+function displayFilteredServices(services, targetElementId = 'serviceList') {
+    const serviceList = document.getElementById(targetElementId);
     const resultsCount = document.getElementById('resultsCount');
     const noResults = document.getElementById('noResults');
+    const noRecentResults = document.getElementById('noRecentResults');
     
     if (serviceList) {
         serviceList.innerHTML = '';
@@ -188,8 +189,12 @@ function displayFilteredServices(services) {
             resultsCount.textContent = services.length;
         }
         
+        // Handle no results messages for different pages
         if (noResults) {
             noResults.style.display = services.length === 0 ? 'block' : 'none';
+        }
+        if (noRecentResults && targetElementId === 'recentServiceList') {
+            noRecentResults.style.display = services.length === 0 ? 'block' : 'none';
         }
     }
 }
@@ -202,7 +207,17 @@ function setupSearchAndFilters() {
         searchBox.addEventListener('input', function(e) {
             currentFilters.searchQuery = e.target.value;
             const filteredServices = filterServices();
-            displayFilteredServices(filteredServices);
+            
+            // Update both service lists on home page, or just one on browse page
+            if (document.getElementById('recentServiceList')) {
+                // Home page - update both sections
+                const recentServices = filteredServices.slice(0, 3);
+                displayFilteredServices(recentServices, 'recentServiceList');
+                displayFilteredServices(filteredServices, 'serviceList');
+            } else {
+                // Browse page - update main list only
+                displayFilteredServices(filteredServices, 'serviceList');
+            }
         });
     }
     
@@ -214,7 +229,14 @@ function setupSearchAndFilters() {
                 .filter(cb => cb.checked)
                 .map(cb => cb.value);
             const filteredServices = filterServices();
-            displayFilteredServices(filteredServices);
+            
+            if (document.getElementById('recentServiceList')) {
+                const recentServices = filteredServices.slice(0, 3);
+                displayFilteredServices(recentServices, 'recentServiceList');
+                displayFilteredServices(filteredServices, 'serviceList');
+            } else {
+                displayFilteredServices(filteredServices, 'serviceList');
+            }
         });
     });
     
@@ -224,7 +246,14 @@ function setupSearchAndFilters() {
         registeredFilter.addEventListener('change', function(e) {
             currentFilters.registered = e.target.value;
             const filteredServices = filterServices();
-            displayFilteredServices(filteredServices);
+            
+            if (document.getElementById('recentServiceList')) {
+                const recentServices = filteredServices.slice(0, 3);
+                displayFilteredServices(recentServices, 'recentServiceList');
+                displayFilteredServices(filteredServices, 'serviceList');
+            } else {
+                displayFilteredServices(filteredServices, 'serviceList');
+            }
         });
     }
     
@@ -234,7 +263,14 @@ function setupSearchAndFilters() {
         sortBy.addEventListener('change', function(e) {
             currentFilters.sortBy = e.target.value;
             const filteredServices = filterServices();
-            displayFilteredServices(filteredServices);
+            
+            if (document.getElementById('recentServiceList')) {
+                const recentServices = filteredServices.slice(0, 3);
+                displayFilteredServices(recentServices, 'recentServiceList');
+                displayFilteredServices(filteredServices, 'serviceList');
+            } else {
+                displayFilteredServices(filteredServices, 'serviceList');
+            }
         });
     }
     
@@ -261,7 +297,14 @@ function setupSearchAndFilters() {
             }
             
             const filteredServices = filterServices();
-            displayFilteredServices(filteredServices);
+            
+            if (document.getElementById('recentServiceList')) {
+                const recentServices = filteredServices.slice(0, 3);
+                displayFilteredServices(recentServices, 'recentServiceList');
+                displayFilteredServices(filteredServices, 'serviceList');
+            } else {
+                displayFilteredServices(filteredServices, 'serviceList');
+            }
         });
     });
     
@@ -300,41 +343,49 @@ function setupSearchAndFilters() {
             });
             
             // Show all services
-            displayFilteredServices(sampleServices);
+            const allServices = filterServices();
+            if (document.getElementById('recentServiceList')) {
+                const recentServices = allServices.slice(0, 3);
+                displayFilteredServices(recentServices, 'recentServiceList');
+                displayFilteredServices(allServices, 'serviceList');
+            } else {
+                displayFilteredServices(allServices, 'serviceList');
+            }
+        });
+    }
+    
+    // Apply filters button
+    const applyFilters = document.getElementById('applyFilters');
+    if (applyFilters) {
+        applyFilters.addEventListener('click', function() {
+            const filteredServices = filterServices();
+            if (document.getElementById('recentServiceList')) {
+                const recentServices = filteredServices.slice(0, 3);
+                displayFilteredServices(recentServices, 'recentServiceList');
+                displayFilteredServices(filteredServices, 'serviceList');
+            } else {
+                displayFilteredServices(filteredServices, 'serviceList');
+            }
         });
     }
 }
 
 // Home page functionality
-function displayServices() {
-    const serviceList = document.getElementById('serviceList');
-    const recentServiceList = document.getElementById('recentServiceList');
-    const resultsCount = document.getElementById('resultsCount');
-    
-    if (serviceList) serviceList.innerHTML = '';
-    if (recentServiceList) recentServiceList.innerHTML = '';
-    
-    // Add services to main list
-    sampleServices.forEach(service => {
-        const serviceItem = createServiceCard(service);
-        if (serviceList) serviceList.appendChild(serviceItem);
-    });
-    
-    // Add recent services (last 3)
+function setupHomePage() {
+    // Display initial services
     const recentServices = sampleServices.slice(0, 3);
-    recentServices.forEach(service => {
-        const serviceItem = createServiceCard(service);
-        if (recentServiceList) recentServiceList.appendChild(serviceItem);
-    });
-    
-    if (resultsCount) resultsCount.textContent = sampleServices.length;
+    displayFilteredServices(recentServices, 'recentServiceList');
+    displayFilteredServices(sampleServices, 'serviceList');
     updateStatistics();
+    
+    // Setup search and filters
+    setupSearchAndFilters();
 }
 
 // Browse page functionality
 function setupBrowsePage() {
     // Display all services initially
-    displayFilteredServices(sampleServices);
+    displayFilteredServices(sampleServices, 'serviceList');
     // Setup search and filters
     setupSearchAndFilters();
 }
@@ -342,10 +393,10 @@ function setupBrowsePage() {
 // Detect which page we're on and load appropriate content
 document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('recentServiceList')) {
-        // Home page
-        displayServices();
+        // Home page - has recent services section
+        setupHomePage();
     } else if (document.getElementById('serviceList')) {
-        // Browse page
+        // Browse page - only has main service list
         setupBrowsePage();
     }
 });
