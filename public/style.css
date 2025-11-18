@@ -728,16 +728,146 @@ button:hover {
     transform: translateY(0);
 }
 
-/* Blog & News Styles */
+/* ===== BLOG & RESOURCES STYLES ===== */
+
+/* Blog Header */
 .blog-header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 50px;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, var(--color-1) 0%, var(--color-4) 100%);
+    color: white;
+    border-radius: 15px;
 }
 
 .blog-header h1 {
-    color: var(--color-4);
+    color: white;
     margin-bottom: 15px;
     font-size: 2.5em;
+}
+
+.blog-header p {
+    font-size: 1.2em;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.articles-section, .resources-section {
+    margin-bottom: 60px;
+}
+
+.articles-section h2, .resources-section h2 {
+    color: var(--color-4);
+    margin-bottom: 30px;
+    border-bottom: 3px solid var(--color-4);
+    padding-bottom: 10px;
+    font-size: 2em;
+}
+
+.articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.article-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    border: 1px solid var(--color-2);
+}
+
+.article-card:hover {
+    transform: translateY(-5px);
+}
+
+.article-image {
+    height: 160px;
+    background: var(--color-2);
+}
+
+.article-content {
+    padding: 25px;
+}
+
+.article-content h3 {
+    color: var(--color-4);
+    margin-bottom: 10px;
+    font-size: 1.3em;
+}
+
+.article-meta {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.article-content p {
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.read-more {
+    color: var(--color-4);
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.read-more:hover {
+    text-decoration: underline;
+}
+
+.resources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.resource-card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    border-left: 4px solid var(--color-4);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.resource-card:hover {
+    transform: translateY(-3px);
+}
+
+.resource-card h3 {
+    color: var(--color-4);
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.resource-card p {
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.resource-link {
+    display: inline-block;
+    background: var(--color-4);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.3s ease;
+}
+
+.resource-link:hover {
+    transform: translateY(-2px);
+    background: var(--color-1);
 }
 
 .newsletter-section {
@@ -746,11 +876,22 @@ button:hover {
 
 .newsletter-card {
     background: white;
-    padding: 30px;
+    padding: 40px;
     border-radius: 15px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     text-align: center;
     border-left: 5px solid var(--color-4);
+}
+
+.newsletter-card h2 {
+    color: var(--color-4);
+    margin-bottom: 15px;
+}
+
+.newsletter-card p {
+    color: #666;
+    margin-bottom: 25px;
+    font-size: 1.1em;
 }
 
 .newsletter-form {
@@ -770,100 +911,12 @@ button:hover {
     font-size: 16px;
 }
 
-.articles-section, .resources-section {
-    margin-bottom: 50px;
+.newsletter-form input:focus {
+    outline: none;
+    border-color: var(--color-4);
 }
 
-.articles-section h2, .resources-section h2 {
-    color: var(--color-4);
-    margin-bottom: 25px;
-    border-bottom: 2px solid var(--color-4);
-    padding-bottom: 10px;
-}
-
-.articles-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px;
-}
-
-.article-card {
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-}
-
-.article-card:hover {
-    transform: translateY(-5px);
-}
-
-.article-image {
-    height: 160px;
-    background: var(--color-2);
-}
-
-.article-content {
-    padding: 20px;
-}
-
-.article-content h3 {
-    color: var(--color-4);
-    margin-bottom: 10px;
-}
-
-.article-meta {
-    color: #666;
-    font-size: 0.9em;
-    margin-bottom: 10px;
-}
-
-.read-more {
-    color: var(--color-4);
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.read-more:hover {
-    text-decoration: underline;
-}
-
-.resources-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-}
-
-.resource-card {
-    background: white;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    border-left: 4px solid var(--color-4);
-    text-align: center;
-}
-
-.resource-card h3 {
-    color: var(--color-4);
-    margin-bottom: 10px;
-}
-
-.resource-link {
-    display: inline-block;
-    background: var(--color-4);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    text-decoration: none;
-    font-weight: bold;
-    margin-top: 10px;
-    transition: transform 0.3s ease;
-}
-
-.resource-link:hover {
-    transform: translateY(-2px);
-}
+/* ===== END BLOG STYLES ===== */
 
 /* Service Details Reviews */
 .service-meta {
@@ -1393,6 +1446,31 @@ button:hover {
         align-items: flex-start;
         gap: 5px;
     }
+
+    /* Blog Responsive */
+    .blog-header {
+        padding: 30px 15px;
+    }
+    
+    .blog-header h1 {
+        font-size: 2em;
+    }
+    
+    .articles-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .resources-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .newsletter-form {
+        flex-direction: column;
+    }
+    
+    .resource-card, .article-content {
+        padding: 20px;
+    }
 }
 
 @media (max-width: 600px) {
@@ -1425,6 +1503,7 @@ button:hover {
         font-size: 1.2em;
     }
 }
+
 /* Section subtitles */
 .section-subtitle {
     color: #666;
@@ -1432,8 +1511,8 @@ button:hover {
     margin-bottom: 20px;
     text-align: center;
     font-style: italic;
-
 }
+
 .add-service-btn {
   background-color: #2563eb; /* Nice blue color */
   color: white;
@@ -1447,6 +1526,7 @@ button:hover {
 .add-service-btn:hover {
   background-color: #1d4ed8; /* Darker blue on hover */
 }
+
 /* Ensure service photos work with your existing card style */
 .service-photo {
     width: 80px;
