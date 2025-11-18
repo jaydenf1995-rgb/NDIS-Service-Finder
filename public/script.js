@@ -71,6 +71,17 @@ const sampleServices = [
         dateAdded: "2024-01-03",
         photo: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=400&h=300&fit=crop",
         email: "team@alliedhealth.com"
+    },
+    {        id: 7,
+        name: "Jayden Farmer",
+        category: "Support Coordination",
+        description: "They call me Big Bird cause of my massive B..Bird",
+        phone: "0400 678 901",
+        location: "Taree, NSW",
+        isRegistered: "Yes",
+        dateAdded: "2025-11-19",
+        photo: "https://drive.google.com/uc?export=view&id=1HUHwtcEqIPGeDxd7COGsyvp_zMNOiHuW",
+        email: "jaydenf1995@gmail.com"
     }
 ];
 
@@ -400,3 +411,4 @@ document.addEventListener('DOMContentLoaded', function() {
         setupBrowsePage();
     }
 });
+
