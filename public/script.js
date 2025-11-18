@@ -24,81 +24,20 @@ const sampleServices = [
         photo: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop",
         email: "info@brightfuture.com"
     },
-    {
-        id: 3,
-        name: "Therapy Plus",
-        category: "Occupational Therapist",
-        description: "NDIS registered occupational therapy services",
-        phone: "0400 345 678",
-        location: "Brisbane, QLD",
-        isRegistered: "Yes",
-        dateAdded: "2024-01-12",
-        photo: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop",
-        email: "hello@therapyplus.com"
-    },
-    {
-        id: 4,
-        name: "Day Program Connect",
-        category: "Offers Day Programs",
-        description: "Engaging day programs and community activities",
-        phone: "0400 456 789",
-        location: "Perth, WA",
-        isRegistered: "No",
-        dateAdded: "2024-01-08",
-        photo: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=400&h=300&fit=crop",
-        email: "programs@connect.com"
-    },
-    {
-        id: 5,
-        name: "Respite Care Australia",
-        category: "Respite",
-        description: "Short-term accommodation and respite care services",
-        phone: "0400 567 890",
-        location: "Adelaide, SA",
-        isRegistered: "Yes",
-        dateAdded: "2024-01-05",
-        photo: "https://images.unsplash.com/photo-1558618666-fcd25856cd8d?w=400&h=300&fit=crop",
-        email: "care@respite.com"
-    },
-    {
-        id: 6,
-        name: "Allied Health Partners",
-        category: "Allied Health Professional",
-        description: "Team of physiotherapists, speech pathologists and dietitians",
-        phone: "0400 678 901",
-        location: "Canberra, ACT",
-        isRegistered: "Yes",
-        dateAdded: "2024-01-03",
-        photo: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=400&h=300&fit=crop",
-        email: "team@alliedhealth.com"
-    }
+    // ... (keep all your other sample services here)
 ];
 
-// Function to display services
-function displayServices() {
-    const serviceList = document.getElementById('serviceList');
-    const recentServiceList = document.getElementById('recentServiceList');
-    const resultsCount = document.getElementById('resultsCount');
+// Function to update the statistics
+function updateStatistics() {
+    const totalServices = sampleServices.length;
     
-    // Clear existing content
-    serviceList.innerHTML = '';
-    recentServiceList.innerHTML = '';
+    // Count unique locations (suburbs)
+    const uniqueLocations = new Set(sampleServices.map(service => service.location));
+    const totalLocations = uniqueLocations.size;
     
-    // Add services to main list
-    sampleServices.forEach(service => {
-        const serviceItem = createServiceCard(service);
-        serviceList.appendChild(serviceItem);
-    });
-    
-    // Add recent services (last 3)
-    const recentServices = sampleServices.slice(0, 3);
-    recentServices.forEach(service => {
-        const serviceItem = createServiceCard(service);
-        recentServiceList.appendChild(serviceItem);
-    });
-    
-    // Update results count
-    resultsCount.textContent = sampleServices.length;
+    // Update the statistics display
+    document.getElementById('totalServices').textContent = `${totalServices}+`;
+    document.getElementById('totalLocations').textContent = `${totalLocations}+`;
 }
 
 function createServiceCard(service) {
@@ -132,6 +71,34 @@ function createServiceCard(service) {
     });
     
     return li;
+}
+
+// Function to display services AND update statistics
+function displayServices() {
+    const serviceList = document.getElementById('serviceList');
+    const recentServiceList = document.getElementById('recentServiceList');
+    const resultsCount = document.getElementById('resultsCount');
+    
+    // Clear existing content
+    serviceList.innerHTML = '';
+    recentServiceList.innerHTML = '';
+    
+    // Add services to main list
+    sampleServices.forEach(service => {
+        const serviceItem = createServiceCard(service);
+        serviceList.appendChild(serviceItem);
+    });
+    
+    // Add recent services (last 3)
+    const recentServices = sampleServices.slice(0, 3);
+    recentServices.forEach(service => {
+        const serviceItem = createServiceCard(service);
+        recentServiceList.appendChild(serviceItem);
+    });
+    
+    // Update results count and statistics
+    resultsCount.textContent = sampleServices.length;
+    updateStatistics();
 }
 
 // Call this when page loads
