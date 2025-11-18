@@ -24,7 +24,54 @@ const sampleServices = [
         photo: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop",
         email: "info@brightfuture.com"
     },
-    // ... (keep all your other sample services here)
+    {
+        id: 3,
+        name: "Therapy Plus",
+        category: "Occupational Therapist",
+        description: "NDIS registered occupational therapy services",
+        phone: "0400 345 678",
+        location: "Brisbane, QLD",
+        isRegistered: "Yes",
+        dateAdded: "2024-01-12",
+        photo: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop",
+        email: "hello@therapyplus.com"
+    },
+    {
+        id: 4,
+        name: "Day Program Connect",
+        category: "Offers Day Programs",
+        description: "Engaging day programs and community activities",
+        phone: "0400 456 789",
+        location: "Perth, WA",
+        isRegistered: "No",
+        dateAdded: "2024-01-08",
+        photo: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=400&h=300&fit=crop",
+        email: "programs@connect.com"
+    },
+    {
+        id: 5,
+        name: "Respite Care Australia",
+        category: "Respite",
+        description: "Short-term accommodation and respite care services",
+        phone: "0400 567 890",
+        location: "Adelaide, SA",
+        isRegistered: "Yes",
+        dateAdded: "2024-01-05",
+        photo: "https://images.unsplash.com/photo-1558618666-fcd25856cd8d?w=400&h=300&fit=crop",
+        email: "care@respite.com"
+    },
+    {
+        id: 6,
+        name: "Allied Health Partners",
+        category: "Allied Health Professional",
+        description: "Team of physiotherapists, speech pathologists and dietitians",
+        phone: "0400 678 901",
+        location: "Canberra, ACT",
+        isRegistered: "Yes",
+        dateAdded: "2024-01-03",
+        photo: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=400&h=300&fit=crop",
+        email: "team@alliedhealth.com"
+    }
 ];
 
 // Function to update the statistics
@@ -74,7 +121,7 @@ function createServiceCard(service) {
     return li;
 }
 
-// Function to display services AND update statistics
+// Function to display services AND update statistics (for home page)
 function displayServices() {
     const serviceList = document.getElementById('serviceList');
     const recentServiceList = document.getElementById('recentServiceList');
@@ -102,6 +149,41 @@ function displayServices() {
     updateStatistics();
 }
 
-// Call this when page loads
-document.addEventListener('DOMContentLoaded', displayServices);
+// Browse page functionality
+function setupBrowsePage() {
+    const serviceList = document.getElementById('serviceList');
+    const resultsCount = document.getElementById('resultsCount');
+    const noResults = document.getElementById('noResults');
+    
+    if (serviceList) {
+        // Clear existing content
+        serviceList.innerHTML = '';
+        
+        // Add ALL services to the browse page
+        sampleServices.forEach(service => {
+            const serviceItem = createServiceCard(service);
+            serviceList.appendChild(serviceItem);
+        });
+        
+        // Update results count
+        if (resultsCount) {
+            resultsCount.textContent = sampleServices.length;
+        }
+        
+        // Show/hide no results message
+        if (noResults) {
+            noResults.style.display = sampleServices.length === 0 ? 'block' : 'none';
+        }
+    }
+}
 
+// Detect which page we're on and load appropriate content
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('recentServiceList')) {
+        // Home page - has recent services section
+        displayServices();
+    } else if (document.getElementById('serviceList')) {
+        // Browse page - only has main service list
+        setupBrowsePage();
+    }
+});
