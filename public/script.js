@@ -1,4 +1,4 @@
-// Sample services data with photos
+// Sample services data with photos - using your current card structure
 const sampleServices = [
     {
         id: 1,
@@ -103,26 +103,34 @@ function displayServices() {
 
 function createServiceCard(service) {
     const li = document.createElement('li');
-    li.className = 'service-card';
     
     // Use a placeholder if no photo is available
     const photoUrl = service.photo || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop';
     
     li.innerHTML = `
-        <div class="service-photo">
-            <img src="${photoUrl}" alt="${service.name}" onerror="this.src='https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop'">
-        </div>
+        <img src="${photoUrl}" alt="${service.name}" class="service-photo" onerror="this.src='https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop'">
         <div class="service-info">
-            <h3>${service.name}</h3>
-            <p class="service-category">${service.category}</p>
-            <p class="service-description">${service.description}</p>
-            <div class="service-details">
-                <p class="service-location">📍 ${service.location}</p>
-                <p class="service-phone">📞 ${service.phone}</p>
-                <p class="service-registered">${service.isRegistered === 'Yes' ? '✅ NDIS Registered' : 'ℹ️ Not NDIS Registered'}</p>
+            <a href="#">${service.name}</a>
+            <p>${service.category}</p>
+            <p>${service.description}</p>
+            <p>📍 ${service.location}</p>
+            <p>📞 ${service.phone}</p>
+            <p>${service.isRegistered === 'Yes' ? '✅ NDIS Registered' : 'ℹ️ Not NDIS Registered'}</p>
+            <div class="quick-contact">
+                <button class="contact-btn" onclick="alert('Calling ${service.phone}')">📞 Call</button>
+                <button class="contact-btn" onclick="alert('Emailing ${service.email}')">✉️ Email</button>
             </div>
         </div>
+        <button class="favorite-btn">♡</button>
     `;
+    
+    // Add favorite button functionality
+    const favoriteBtn = li.querySelector('.favorite-btn');
+    favoriteBtn.addEventListener('click', function() {
+        this.classList.toggle('favorited');
+        this.textContent = this.classList.contains('favorited') ? '♥' : '♡';
+    });
+    
     return li;
 }
 
