@@ -29,15 +29,16 @@ const sampleServices = [
 
 // Function to update the statistics
 function updateStatistics() {
+    // Count ALL services, not just recent ones
     const totalServices = sampleServices.length;
     
-    // Count unique locations (suburbs)
+    // Count unique locations (suburbs) from ALL services
     const uniqueLocations = new Set(sampleServices.map(service => service.location));
     const totalLocations = uniqueLocations.size;
     
     // Update the statistics display
-    document.getElementById('totalServices').textContent = `${totalServices}+`;
-    document.getElementById('totalLocations').textContent = `${totalLocations}+`;
+    document.getElementById('totalServices').textContent = `${totalServices}`;
+    document.getElementById('totalLocations').textContent = `${totalLocations}`;
 }
 
 function createServiceCard(service) {
@@ -103,3 +104,4 @@ function displayServices() {
 
 // Call this when page loads
 document.addEventListener('DOMContentLoaded', displayServices);
+
