@@ -2,166 +2,133 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NDIS News & Resources - NDIS Service Finder</title>
+    <title>News & Resources - NDIS Service Finder</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-    <div class="container">
-        <div class="header-content">
-            <h1>NDIS Service Finder</h1>
-            <p class="slogan">Help at your fingertips</p>
-        </div>
-        <nav>
-            <a href="index.html">Home</a>
-            <a href="browse.html">Browse Services</a>
-            <a href="https://forms.gle/k52cthQPL88q7uDY8" target="_blank" class=add-service-btn">
-        Add Your Service
-    </a>
-            <a href="blog.html">News & Resources</a>
-        </nav>
-    </div>
-</header>
-
-<main class="container">
-    <section class="blog-header">
-        <h1>NDIS News & Resources</h1>
-        <p>Stay informed with the latest NDIS updates, helpful resources, and community news.</p>
-    </section>
-
-    <!-- Newsletter Subscription -->
-    <section class="newsletter-section">
-        <div class="newsletter-card">
-            <h2>📬 Stay Updated</h2>
-            <p>Subscribe to our newsletter for the latest NDIS news and new services in your area.</p>
-            <form id="newsletterForm" class="newsletter-form">
-                <input type="email" id="newsletterEmail" placeholder="Enter your email" required>
-                <button type="submit">Subscribe</button>
-            </form>
-            <p id="newsletterMessage" style="margin-top: 10px;"></p>
-        </div>
-    </section>
-
-    <!-- Featured Articles -->
-    <section class="articles-section">
-        <h2>Featured Articles</h2>
-        <div class="articles-grid">
-            <article class="article-card">
-                <div class="article-image" style="background: linear-gradient(135deg, var(--color-1) 0%, var(--color-4) 100%);"></div>
-                <div class="article-content">
-                    <h3>Understanding Your NDIS Plan</h3>
-                    <p class="article-meta">Posted on January 15, 2025 • 5 min read</p>
-                    <p>Learn how to make the most of your NDIS plan and understand your funding categories.</p>
-                    <a href="#" class="read-more">Read More →</a>
-                </div>
-            </article>
-
-            <article class="article-card">
-                <div class="article-image" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);"></div>
-                <div class="article-content">
-                    <h3>Finding the Right Support Worker</h3>
-                    <p class="article-meta">Posted on January 10, 2025 • 4 min read</p>
-                    <p>Tips for choosing a support worker that matches your needs and personality.</p>
-                    <a href="#" class="read-more">Read More →</a>
-                </div>
-            </article>
-
-            <article class="article-card">
-                <div class="article-image" style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);"></div>
-                <div class="article-content">
-                    <h3>NDIS Price Guide Updates 2025</h3>
-                    <p class="article-meta">Posted on January 5, 2025 • 6 min read</p>
-                    <p>Latest changes to the NDIS price guide and what it means for participants.</p>
-                    <a href="#" class="read-more">Read More →</a>
-                </div>
-            </article>
-
-            <article class="article-card">
-                <div class="article-image" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);"></div>
-                <div class="article-content">
-                    <h3>Community Participation Ideas</h3>
-                    <p class="article-meta">Posted on December 28, 2024 • 3 min read</p>
-                    <p>Creative ways to use your core supports for community participation.</p>
-                    <a href="#" class="read-more">Read More →</a>
-                </div>
-            </article>
-        </div>
-    </section>
-
-    <!-- Resources Section -->
-    <section class="resources-section">
-        <h2>Helpful Resources</h2>
-        <div class="resources-grid">
-            <div class="resource-card">
-                <h3>📋 NDIS Forms & Templates</h3>
-                <p>Downloadable forms and templates for service agreements and planning.</p>
-                <a href="#" class="resource-link">Download Resources</a>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1>NDIS Service Finder</h1>
+                <p class="slogan">Help at your fingertips</p>
             </div>
-
-            <div class="resource-card">
-                <h3>📞 Support Services</h3>
-                <p>Contact information for advocacy services and NDIS support.</p>
-                <a href="#" class="resource-link">View Contacts</a>
-            </div>
-
-            <div class="resource-card">
-                <h3>🎓 Training & Workshops</h3>
-                <p>Upcoming workshops and training sessions for participants and providers.</p>
-                <a href="#" class="resource-link">View Schedule</a>
-            </div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="browse.html">Browse Services</a>
+                <a href="https://forms.gle/k52cthQPL88q7uDY8" target="_blank">Add Your Service</a>
+                <a href="blog.html">News & Resources</a>
+            </nav>
         </div>
-    </section>
-</main>
+    </header>
 
-<footer>
-    <div class="container">
-        <p>&copy; 2025 NDIS Service Finder. All rights reserved.</p>
-    </div>
-</footer>
+    <main class="container">
+        <!-- Blog Header -->
+        <section class="blog-header">
+            <h1>NDIS News & Resources</h1>
+            <p>Helpful information, guides, and resources for NDIS participants and providers</p>
+        </section>
 
-<script>
-// Newsletter subscription
-document.getElementById('newsletterForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const email = document.getElementById('newsletterEmail').value;
-    const messageEl = document.getElementById('newsletterMessage');
-    const button = e.target.querySelector('button');
-    
-    button.disabled = true;
-    button.textContent = 'Subscribing...';
-    
-    try {
-        const response = await fetch('/api/subscribe', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email })
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            messageEl.textContent = result.message;
-            messageEl.style.color = 'green';
-            e.target.reset();
-        } else {
-            messageEl.textContent = result.error;
-            messageEl.style.color = 'red';
-        }
-    } catch (error) {
-        messageEl.textContent = 'Network error. Please try again.';
-        messageEl.style.color = 'red';
-    } finally {
-        button.disabled = false;
-        button.textContent = 'Subscribe';
-    }
-});
-</script>
+        <!-- Featured Articles Section -->
+        <section class="articles-section">
+            <h2>Featured Articles</h2>
+            <div class="articles-grid">
+                <article class="article-card">
+                    <div class="article-image" style="background: linear-gradient(135deg, var(--color-1) 0%, var(--color-4) 100%);"></div>
+                    <div class="article-content">
+                        <h3>Understanding Your NDIS Plan</h3>
+                        <p class="article-meta">Published January 15, 2024</p>
+                        <p>Learn how to make the most of your NDIS plan and understand your funding categories.</p>
+                        <a href="#" class="read-more" onclick="alert('Article coming soon!')">Read More →</a>
+                    </div>
+                </article>
+
+                <article class="article-card">
+                    <div class="article-image" style="background: linear-gradient(135deg, var(--color-2) 0%, var(--color-4) 100%);"></div>
+                    <div class="article-content">
+                        <h3>How to Choose the Right Support Worker</h3>
+                        <p class="article-meta">Published January 10, 2024</p>
+                        <p>Tips for finding support workers that match your needs and personality.</p>
+                        <a href="#" class="read-more" onclick="alert('Article coming soon!')">Read More →</a>
+                    </div>
+                </article>
+
+                <article class="article-card">
+                    <div class="article-image" style="background: linear-gradient(135deg, var(--color-3) 0%, var(--color-4) 100%);"></div>
+                    <div class="article-content">
+                        <h3>Navigating SIL Accommodation</h3>
+                        <p class="article-meta">Published January 5, 2024</p>
+                        <p>A guide to Supported Independent Living and finding the right accommodation.</p>
+                        <a href="#" class="read-more" onclick="alert('Article coming soon!')">Read More →</a>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- NDIS Forms & Templates Section -->
+        <section class="resources-section">
+            <h2>NDIS Forms & Templates</h2>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <h3>Service Agreement Template</h3>
+                    <p>Basic template for service agreements between participants and providers</p>
+                    <a href="#" class="resource-link" onclick="alert('Template download coming soon!')">Download Template</a>
+                </div>
+
+                <div class="resource-card">
+                    <h3>Support Plan Worksheet</h3>
+                    <p>Worksheet to help plan and document your support needs</p>
+                    <a href="#" class="resource-link" onclick="alert('Worksheet download coming soon!')">Download Worksheet</a>
+                </div>
+
+                <div class="resource-card">
+                    <h3>NDIS Review Checklist</h3>
+                    <p>Checklist to prepare for your NDIS plan review meeting</p>
+                    <a href="#" class="resource-link" onclick="alert('Checklist download coming soon!')">Download Checklist</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Support Services Section -->
+        <section class="resources-section">
+            <h2>Support Services & Helplines</h2>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <h3>NDIS National Contact</h3>
+                    <p>Phone: 1800 800 110<br>Email: enquiries@ndis.gov.au</p>
+                    <a href="tel:1800800110" class="resource-link">📞 Call Now</a>
+                </div>
+
+                <div class="resource-card">
+                    <h3>NDIS Quality & Safeguards</h3>
+                    <p>Phone: 1800 035 544<br>For complaints and provider issues</p>
+                    <a href="tel:1800035544" class="resource-link">📞 Call Now</a>
+                </div>
+
+                <div class="resource-card">
+                    <h3>Emergency Support</h3>
+                    <p>Lifeline: 13 11 14<br>Beyond Blue: 1300 22 4636</p>
+                    <a href="tel:131114" class="resource-link">📞 Call Lifeline</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Newsletter Signup -->
+        <section class="newsletter-section">
+            <div class="newsletter-card">
+                <h2>Stay Updated</h2>
+                <p>Get the latest NDIS news and resources delivered to your inbox</p>
+                <form class="newsletter-form" onsubmit="alert('Thank you for subscribing! We\\'ll keep you updated.'); return false;">
+                    <input type="email" placeholder="Enter your email" required>
+                    <button type="submit" class="primary-btn">Subscribe</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 NDIS Service Finder. All rights reserved.</p>
+        </div>
+    </footer>
 </body>
-
 </html>
-
-
-
