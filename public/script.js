@@ -83,7 +83,7 @@ function getFallbackServices() {
             "phone": "0400 000 001",
             "email": "sarah@example.com",
             "photo": "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face",
-            "dateAdded": new Date(Date.now() - 86400000).toISOString() // yesterday
+            "dateAdded": new Date(Date.now() - 86400000).toISOString()
         },
         {
             "id": 3,
@@ -96,7 +96,7 @@ function getFallbackServices() {
             "phone": "0400 000 002",
             "email": "michael@example.com",
             "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
-            "dateAdded": new Date(Date.now() - 172800000).toISOString() // 2 days ago
+            "dateAdded": new Date(Date.now() - 172800000).toISOString()
         }
     ];
 }
@@ -152,13 +152,15 @@ function displayServices(services) {
 
 // Create service card HTML
 function createServiceCard(service) {
+    const placeholderImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+';
+    
     return `
     <li class="service-card">
         <div class="card-header">
-            <img src="${service.photo || 'https://via.placeholder.com/80x80/3B82F6/FFFFFF?text=NDIS'}" 
+            <img src="${service.photo || placeholderImage}" 
                  alt="${service.name}" 
                  class="provider-photo"
-                 onerror="this.src='https://via.placeholder.com/80x80/3B82F6/FFFFFF?text=NDIS'">
+                 onerror="this.src='${placeholderImage}'">
             <div class="provider-info">
                 <h3>${service.name}</h3>
                 <p class="provider-location">📍 ${service.location}</p>
@@ -401,7 +403,7 @@ function resetFiltersHandler() {
     // Reset category chips
     const chips = document.querySelectorAll('.category-chips .chip');
     chips.forEach(chip => chip.classList.remove('active'));
-    chips[0].classList.add('active'); // Activate "All Services"
+    if (chips.length > 0) chips[0].classList.add('active');
     
     // Reset filter state
     currentFilters = {
