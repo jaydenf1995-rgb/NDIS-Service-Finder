@@ -154,5 +154,78 @@
     </footer>
 
     <script src="script.js"></script>
+    <!-- Accessibility Widget -->
+<script>
+// Simple accessibility functions
+function increaseFontSize() {
+    document.body.style.fontSize = 'larger';
+}
+
+function decreaseFontSize() {
+    document.body.style.fontSize = 'smaller';
+}
+
+function resetFontSize() {
+    document.body.style.fontSize = 'initial';
+}
+
+function highContrast() {
+    document.body.classList.toggle('high-contrast');
+}
+
+function grayscale() {
+    document.body.classList.toggle('grayscale');
+}
+</script>
+
+<style>
+/* Accessibility Styles */
+.accessibility-widget {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    background: var(--color-4);
+    border-radius: 10px 0 0 10px;
+    padding: 10px;
+    z-index: 1000;
+}
+
+.accessibility-btn {
+    background: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 12px;
+    margin: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    display: block;
+    width: 100%;
+}
+
+.high-contrast {
+    background: #000 !important;
+    color: #fff !important;
+}
+
+.high-contrast * {
+    background: #000 !important;
+    color: #fff !important;
+    border-color: #fff !important;
+}
+
+.grayscale {
+    filter: grayscale(100%);
+}
+</style>
+
+<div class="accessibility-widget">
+    <button class="accessibility-btn" onclick="increaseFontSize()" title="Increase Text Size">A+</button>
+    <button class="accessibility-btn" onclick="decreaseFontSize()" title="Decrease Text Size">A-</button>
+    <button class="accessibility-btn" onclick="resetFontSize()" title="Reset Text Size">A</button>
+    <button class="accessibility-btn" onclick="highContrast()" title="High Contrast Mode">⚫⚪</button>
+    <button class="accessibility-btn" onclick="grayscale()" title="Grayscale Mode">🎨</button>
+</div>
 </body>
 </html>
+
