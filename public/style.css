@@ -1681,5 +1681,37 @@ a[href]:not([class]) {
         font-size: 1.5em;
     }
 }
+/* Make all interactive elements in the card show pointer */
+.service-card,
+.service-card * {
+    cursor: pointer;
+}
+
+/* But make sure text selection still works normally */
+.service-card p,
+.service-card h3,
+.service-card .service-description {
+    cursor: text;
+    user-select: text;
+}
+
+/* Optional: Add a subtle "click me" indicator */
+.service-card::after {
+    content: '';
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 20px;
+    height: 20px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b868c6'%3E%3Cpath d='M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.service-card:hover::after {
+    opacity: 0.7;
+}
 
 
