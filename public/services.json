@@ -24,8 +24,8 @@
         "email": "bigbird@example.com",
         "photo": "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face",
         "dateAdded": "2024-01-02T00:00:00.000Z"
-    }
-        {
+    },
+    {
         "id": 3,
         "name": "Bert & Ernie",
         "location": "Brisbane, QLD",
