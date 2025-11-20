@@ -712,6 +712,7 @@ button:hover {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 25px;
+    align-items: stretch; /* This makes all cards same height */
 }
 
 .resource-card {
@@ -722,6 +723,9 @@ button:hover {
     border-left: 4px solid var(--color-4);
     text-align: center;
     transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ensure all cards take full height */
 }
 
 .resource-card:hover {
@@ -732,23 +736,31 @@ button:hover {
     color: var(--color-4);
     margin-bottom: 15px;
     font-size: 1.2em;
+    min-height: 3em; /* Consistent title height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .resource-card p {
     color: #666;
     line-height: 1.5;
     margin-bottom: 20px;
+    flex: 1; /* This makes the paragraph take available space */
 }
 
 .resource-link {
     display: inline-block;
     background: var(--color-4);
     color: white;
-    padding: 10px 20px;
+    padding: 12px 24px;
     border-radius: 25px;
     text-decoration: none;
     font-weight: bold;
     transition: transform 0.3s ease;
+    margin-top: auto; /* Pushes button to bottom */
+    width: fit-content;
+    align-self: center; /* Center the button */
 }
 
 .resource-link:hover {
@@ -1157,3 +1169,4 @@ button:hover {
     transform: translateY(-2px);
     text-decoration: none;
 }
+
