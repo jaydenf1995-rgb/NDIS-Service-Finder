@@ -358,6 +358,7 @@ main {
     flex-direction: column;
     min-height: 320px;
     position: relative;
+    cursor: pointer;
 }
 
 .service-card:hover {
@@ -1680,4 +1681,5 @@ a[href]:not([class]) {
         font-size: 1.5em;
     }
 }
+
 
