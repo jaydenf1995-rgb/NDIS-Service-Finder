@@ -56,17 +56,17 @@ async function loadServices() {
     }
 }
 
-// Fallback data in case JSON fails
+// Fallback data in case JSON fails - UPDATED WITH GOOGLE FORM CATEGORIES
 function getFallbackServices() {
     return [
         {
             "id": 1763270139958,
             "name": "Jayden K Farmer",
-            "location": "taree",
+            "location": "Taree, NSW",
             "services": ["Support Coordination"],
             "registered": "Yes",
-            "description": "Experienced support coordinator specializing in complex cases",
-            "address": "17 dugdale avenue taree",
+            "description": "Experienced support coordinator specializing in complex cases and plan management",
+            "address": "17 Dugdale Avenue, Taree",
             "phone": "0478105741",
             "email": "jaydenf1995@gmail.com",
             "photo": "https://drive.google.com/uc?export=view&id=1HUHwtcEqIPGeDxd7COGsyvp_zMNOiHuW",
@@ -76,10 +76,10 @@ function getFallbackServices() {
             "id": 2,
             "name": "Sarah Johnson",
             "location": "Sydney, NSW",
-            "services": ["Support Worker", "Therapeutic Supports"],
+            "services": ["Support Worker", "Respite"],
             "registered": "Yes",
-            "description": "Dedicated support worker with 5 years experience",
-            "address": "123 Main Street Sydney",
+            "description": "Dedicated support worker with 5 years experience in community access and personal care",
+            "address": "123 Main Street, Sydney",
             "phone": "0400 000 001",
             "email": "sarah@example.com",
             "photo": "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face",
@@ -89,14 +89,53 @@ function getFallbackServices() {
             "id": 3,
             "name": "Michael Chen",
             "location": "Melbourne, VIC",
-            "services": ["Therapeutic Supports", "Support Coordination"],
+            "services": ["Occupational Therapy", "Behavioural Specialist"],
             "registered": "Yes",
-            "description": "Therapist specializing in behavioral support",
-            "address": "456 Collins Street Melbourne",
+            "description": "Therapist specializing in behavioral support and occupational therapy",
+            "address": "456 Collins Street, Melbourne",
             "phone": "0400 000 002",
             "email": "michael@example.com",
             "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
             "dateAdded": new Date(Date.now() - 172800000).toISOString()
+        },
+        {
+            "id": 4,
+            "name": "Sunrise Day Programs",
+            "location": "Brisbane, QLD",
+            "services": ["Day Programs", "SIL Provider"],
+            "registered": "Yes",
+            "description": "Comprehensive day programs and supported independent living services",
+            "address": "789 Queen Street, Brisbane",
+            "phone": "0400 000 003",
+            "email": "info@sunriseday.com",
+            "photo": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+",
+            "dateAdded": new Date(Date.now() - 259200000).toISOString()
+        },
+        {
+            "id": 5,
+            "name": "David Wilson - Physio Care",
+            "location": "Perth, WA",
+            "services": ["Physiotherapist"],
+            "registered": "Yes",
+            "description": "NDIS registered physiotherapist specializing in mobility and rehabilitation",
+            "address": "321 Murray Street, Perth",
+            "phone": "0400 000 004",
+            "email": "david@physiocare.com",
+            "photo": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+",
+            "dateAdded": new Date(Date.now() - 345600000).toISOString()
+        },
+        {
+            "id": 6,
+            "name": "Plan Management Experts",
+            "location": "Adelaide, SA",
+            "services": ["Plan Management"],
+            "registered": "No",
+            "description": "Expert plan management services to help you manage your NDIS funding",
+            "address": "654 Rundle Mall, Adelaide",
+            "phone": "0400 000 005",
+            "email": "admin@planmanagement.com",
+            "photo": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+",
+            "dateAdded": new Date(Date.now() - 432000000).toISOString()
         }
     ];
 }
@@ -250,7 +289,7 @@ function setupFilterToggle() {
     }
 }
 
-// Setup category chips
+// Setup category chips - UPDATED FOR GOOGLE FORM CATEGORIES
 function setupCategoryChips() {
     const chips = document.querySelectorAll('.category-chips .chip');
     
@@ -266,7 +305,7 @@ function setupCategoryChips() {
     });
 }
 
-// Filter by category
+// Filter by category - UPDATED FOR GOOGLE FORM CATEGORIES
 function filterByCategory(category) {
     let results = [...allServices];
     
@@ -290,7 +329,7 @@ function filterByCategory(category) {
     updateResultsCount(results.length);
 }
 
-// Setup advanced filters
+// Setup advanced filters - UPDATED FOR GOOGLE FORM CATEGORIES
 function setupAdvancedFilters() {
     const applyFiltersBtn = document.getElementById('applyFilters');
     const resetFiltersBtn = document.getElementById('resetFilters');
@@ -304,7 +343,7 @@ function setupAdvancedFilters() {
     }
 }
 
-// Apply advanced filters
+// Apply advanced filters - UPDATED FOR GOOGLE FORM CATEGORIES
 function applyAdvancedFiltersHandler() {
     const categoryCheckboxes = document.querySelectorAll('input[name="category"]:checked');
     const registeredFilter = document.getElementById('registeredFilter');
@@ -330,7 +369,7 @@ function applyAdvancedFiltersHandler() {
     updateResultsCount(results.length);
 }
 
-// Apply advanced filters to results
+// Apply advanced filters to results - UPDATED FOR GOOGLE FORM CATEGORIES
 function applyAdvancedFilters(results) {
     let filtered = [...results];
     
@@ -386,7 +425,7 @@ function sortServices(services, sortBy) {
     }
 }
 
-// Reset filters
+// Reset filters - UPDATED FOR GOOGLE FORM CATEGORIES
 function resetFiltersHandler() {
     // Reset checkboxes
     document.querySelectorAll('input[name="category"]').forEach(cb => {
