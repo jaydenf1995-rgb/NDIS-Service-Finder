@@ -1,18 +1,16 @@
 [
-  {
+{
     "id": 1763270139958,
     "name": "Jayden K Farmer",
     "location": "taree",
-    "category": [
-      "Support Coordinator"
-    ],
+    "services": ["Support Coordination"],
     "registered": "Yes",
     "description": "Jayden",
     "address": "17 dugdale avenue taree",
     "phone": "0478105741",
     "email": "jaydenf1995@gmail.com",
     "photo": "https://drive.google.com/uc?export=view&id=1HUHwtcEqIPGeDxd7COGsyvp_zMNOiHuW"
-  },
+}
   {
     "id": 1763332919809,
     "name": "Elmo",
