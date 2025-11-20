@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Service Details - NDIS Service Finder</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1>NDIS Service Finder</h1>
+                <p class="slogan">Help at your fingertips</p>
+            </div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="browse.html">Browse Services</a>
+                <a href="https://forms.gle/k52cthQPL88q7uDY8" target="_blank">Add Your Service</a>
+                <a href="blog.html">News & Resources</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="dashboard.html" id="dashboardLink" style="display: none;">My Dashboard</a>
+                <a href="#" id="logoutBtn" style="display: none;">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="serviceDetails" class="service-details">
+            <!-- Service details will be loaded here by JavaScript -->
+        </div>
+
+        <div id="loadingMessage" class="loading-message">
+            <div class="loading"></div>
+            <p>Loading service details...</p>
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;">
+            <p>Service not found. <a href="index.html">Return to home page</a></p>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 NDIS Service Finder. All rights reserved. | <a href="privacy.html">Privacy Policy</a></p>
+        </div>
+    </footer>
+
+    <script src="service-details.js"></script>
+</body>
+</html>
