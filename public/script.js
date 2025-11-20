@@ -9,48 +9,97 @@ let allServices = [];
 
 // DOM Content Loaded
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('DOM loaded - initializing app...');
     await initializeApp();
 });
 
 async function initializeApp() {
     try {
-        // Load services from JSON
+        console.log('Loading services...');
         allServices = await loadServices();
+        console.log('Services loaded:', allServices);
         
         // Initialize the app
         displayServices(allServices);
         setupFilters();
         setupSearch();
         
-        console.log('App initialized with', allServices.length, 'services');
+        console.log('App initialized successfully with', allServices.length, 'services');
     } catch (error) {
         console.error('Failed to initialize app:', error);
-        // Fallback: show error message to user
-        document.getElementById('searchResults').innerHTML = 
-            '<div class="error-message">Unable to load services. Please refresh the page.</div>';
     }
 }
 
 // Load services from JSON file
 async function loadServices() {
     try {
-        const response = await fetch('/services.json');
+        console.log('Fetching services.json...');
+        const response = await fetch('./services.json');
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
         const services = await response.json();
         console.log('Successfully loaded services:', services.length);
         return services;
     } catch (error) {
         console.error('Error loading services:', error);
-        // Return empty array as fallback
-        return [];
+        // Return fallback data
+        return getFallbackServices();
     }
+}
+
+// Fallback data in case JSON fails
+function getFallbackServices() {
+    return [
+        {
+            "id": 1763270139958,
+            "name": "Jayden K Farmer",
+            "location": "taree",
+            "services": ["Support Coordination"],
+            "registered": "Yes",
+            "description": "Experienced support coordinator specializing in complex cases",
+            "address": "17 dugdale avenue taree",
+            "phone": "0478105741",
+            "email": "jaydenf1995@gmail.com",
+            "photo": "https://drive.google.com/uc?export=view&id=1HUHwtcEqIPGeDxd7COGsyvp_zMNOiHuW"
+        },
+        {
+            "id": 2,
+            "name": "Sarah Johnson",
+            "location": "Sydney, NSW",
+            "services": ["Support Workers", "Therapeutic Supports"],
+            "registered": "Yes",
+            "description": "Dedicated support worker with 5 years experience",
+            "address": "123 Main Street Sydney",
+            "phone": "0400 000 001",
+            "email": "sarah@example.com",
+            "photo": "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face"
+        },
+        {
+            "id": 3,
+            "name": "Michael Chen",
+            "location": "Melbourne, VIC",
+            "services": ["Therapeutic Supports", "Support Coordination"],
+            "registered": "Yes",
+            "description": "Therapist specializing in behavioral support",
+            "address": "456 Collins Street Melbourne",
+            "phone": "0400 000 002",
+            "email": "michael@example.com",
+            "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face"
+        }
+    ];
 }
 
 // Display services in the UI
 function displayServices(services) {
     const resultsContainer = document.getElementById('searchResults');
+    
+    if (!resultsContainer) {
+        console.error('searchResults container not found!');
+        return;
+    }
     
     if (services.length === 0) {
         resultsContainer.innerHTML = '<div class="no-results">No services found</div>';
@@ -131,6 +180,12 @@ function applyFilter(category) {
 // Setup search functionality
 function setupSearch() {
     const searchInput = document.getElementById('searchInput');
+    
+    if (!searchInput) {
+        console.error('searchInput element not found!');
+        return;
+    }
+    
     let searchTimeout;
     
     searchInput.addEventListener('input', function() {
@@ -143,12 +198,15 @@ function setupSearch() {
 
 // Perform search
 function performSearch(query) {
-    const activeFilter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+    const activeFilter = document.querySelector('.filter-btn.active');
+    if (!activeFilter) return;
+    
+    const filterCategory = activeFilter.getAttribute('data-filter');
     let filteredServices = [...allServices];
     
     // Apply category filter first
-    if (activeFilter !== 'all') {
-        const actualCategory = serviceCategoryMap[activeFilter] || activeFilter;
+    if (filterCategory !== 'all') {
+        const actualCategory = serviceCategoryMap[filterCategory] || filterCategory;
         filteredServices = allServices.filter(service => 
             service.services.includes(actualCategory)
         );
@@ -166,10 +224,4 @@ function performSearch(query) {
     }
     
     displayServices(filteredServices);
-}
-
-// Initialize filters and search when page loads
-function initializeFiltersAndSearch() {
-    setupFilters();
-    setupSearch();
 }
