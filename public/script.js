@@ -1,11 +1,11 @@
-// Service category mapping
-const serviceCategoryMap = {
-    'Coordinators': 'Support Coordination',
-    'Therapeutic': 'Therapeutic Supports',
-    'Support Workers': 'Support Workers'
-};
-
+// Service data and state
 let allServices = [];
+let filteredServices = [];
+let currentFilters = {
+    categories: [],
+    registered: '',
+    sortBy: 'newest'
+};
 
 // DOM Content Loaded
 document.addEventListener('DOMContentLoaded', async function() {
@@ -17,16 +17,23 @@ async function initializeApp() {
     try {
         console.log('Loading services...');
         allServices = await loadServices();
-        console.log('Services loaded:', allServices);
+        console.log('Services loaded:', allServices.length);
         
         // Initialize the app
+        initializeStats();
         displayServices(allServices);
-        setupFilters();
-        setupSearch();
+        setupEventListeners();
+        updateResultsCount(allServices.length);
         
-        console.log('App initialized successfully with', allServices.length, 'services');
+        console.log('App initialized successfully');
     } catch (error) {
         console.error('Failed to initialize app:', error);
+        // Use fallback data
+        allServices = getFallbackServices();
+        initializeStats();
+        displayServices(allServices);
+        setupEventListeners();
+        updateResultsCount(allServices.length);
     }
 }
 
@@ -45,7 +52,6 @@ async function loadServices() {
         return services;
     } catch (error) {
         console.error('Error loading services:', error);
-        // Return fallback data
         return getFallbackServices();
     }
 }
@@ -63,19 +69,21 @@ function getFallbackServices() {
             "address": "17 dugdale avenue taree",
             "phone": "0478105741",
             "email": "jaydenf1995@gmail.com",
-            "photo": "https://drive.google.com/uc?export=view&id=1HUHwtcEqIPGeDxd7COGsyvp_zMNOiHuW"
+            "photo": "https://drive.google.com/uc?export=view&id=1HUHwtcEqIPGeDxd7COGsyvp_zMNOiHuW",
+            "dateAdded": new Date().toISOString()
         },
         {
             "id": 2,
             "name": "Sarah Johnson",
             "location": "Sydney, NSW",
-            "services": ["Support Workers", "Therapeutic Supports"],
+            "services": ["Support Worker", "Therapeutic Supports"],
             "registered": "Yes",
             "description": "Dedicated support worker with 5 years experience",
             "address": "123 Main Street Sydney",
             "phone": "0400 000 001",
             "email": "sarah@example.com",
-            "photo": "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face"
+            "photo": "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face",
+            "dateAdded": new Date(Date.now() - 86400000).toISOString() // yesterday
         },
         {
             "id": 3,
@@ -87,141 +95,334 @@ function getFallbackServices() {
             "address": "456 Collins Street Melbourne",
             "phone": "0400 000 002",
             "email": "michael@example.com",
-            "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face"
+            "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
+            "dateAdded": new Date(Date.now() - 172800000).toISOString() // 2 days ago
         }
     ];
 }
 
+// Initialize statistics
+function initializeStats() {
+    const totalServices = document.getElementById('totalServices');
+    const totalLocations = document.getElementById('totalLocations');
+    
+    if (totalServices) {
+        totalServices.textContent = allServices.length;
+    }
+    
+    if (totalLocations) {
+        const uniqueLocations = new Set(allServices.map(service => service.location));
+        totalLocations.textContent = uniqueLocations.size;
+    }
+}
+
 // Display services in the UI
 function displayServices(services) {
-    const resultsContainer = document.getElementById('searchResults');
+    const serviceList = document.getElementById('serviceList');
+    const recentServiceList = document.getElementById('recentServiceList');
+    const noResults = document.getElementById('noResults');
+    const noRecentResults = document.getElementById('noRecentResults');
     
-    if (!resultsContainer) {
-        console.error('searchResults container not found!');
-        return;
+    // Display all services
+    if (serviceList) {
+        if (services.length === 0) {
+            serviceList.innerHTML = '';
+            if (noResults) noResults.style.display = 'block';
+        } else {
+            serviceList.innerHTML = services.map(service => createServiceCard(service)).join('');
+            if (noResults) noResults.style.display = 'none';
+        }
     }
     
-    if (services.length === 0) {
-        resultsContainer.innerHTML = '<div class="no-results">No services found</div>';
-        return;
+    // Display recent services (last 3)
+    if (recentServiceList) {
+        const recentServices = services
+            .sort((a, b) => new Date(b.dateAdded || b.id) - new Date(a.dateAdded || a.id))
+            .slice(0, 3);
+            
+        if (recentServices.length === 0) {
+            recentServiceList.innerHTML = '';
+            if (noRecentResults) noRecentResults.style.display = 'block';
+        } else {
+            recentServiceList.innerHTML = recentServices.map(service => createServiceCard(service)).join('');
+            if (noRecentResults) noRecentResults.style.display = 'none';
+        }
     }
-    
-    resultsContainer.innerHTML = services.map(service => `
-        <div class="service-card" data-services="${service.services.join(',')}">
-            <div class="card-header">
-                <img src="${service.photo || 'https://via.placeholder.com/80x80/3B82F6/FFFFFF?text=NDIS'}" 
-                     alt="${service.name}" 
-                     class="provider-photo"
-                     onerror="this.src='https://via.placeholder.com/80x80/3B82F6/FFFFFF?text=NDIS'">
-                <div class="provider-info">
-                    <h3>${service.name}</h3>
-                    <p class="provider-location">📍 ${service.location}</p>
-                    <p class="provider-registered">${service.registered === 'Yes' ? '✅ Registered NDIS Provider' : '❌ Not Registered'}</p>
-                </div>
-            </div>
-            <div class="card-body">
-                <p class="service-description">${service.description}</p>
-                <div class="service-tags">
-                    ${service.services.map(service => `<span class="service-tag">${service}</span>`).join('')}
-                </div>
-            </div>
-            <div class="card-footer">
-                <div class="contact-info">
-                    <p>📞 ${service.phone}</p>
-                    <p>✉️ ${service.email}</p>
-                    <p class="address">🏠 ${service.address}</p>
-                </div>
+}
+
+// Create service card HTML
+function createServiceCard(service) {
+    return `
+    <li class="service-card">
+        <div class="card-header">
+            <img src="${service.photo || 'https://via.placeholder.com/80x80/3B82F6/FFFFFF?text=NDIS'}" 
+                 alt="${service.name}" 
+                 class="provider-photo"
+                 onerror="this.src='https://via.placeholder.com/80x80/3B82F6/FFFFFF?text=NDIS'">
+            <div class="provider-info">
+                <h3>${service.name}</h3>
+                <p class="provider-location">📍 ${service.location}</p>
+                <p class="provider-registered">${service.registered === 'Yes' ? '✅ Registered NDIS Provider' : '❌ Not Registered'}</p>
             </div>
         </div>
-    `).join('');
+        <div class="card-body">
+            <p class="service-description">${service.description}</p>
+            <div class="service-tags">
+                ${service.services.map(serviceType => `<span class="service-tag">${serviceType}</span>`).join('')}
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="contact-info">
+                <p>📞 ${service.phone}</p>
+                <p>✉️ ${service.email}</p>
+                <p class="address">🏠 ${service.address}</p>
+            </div>
+        </div>
+    </li>
+    `;
 }
 
-// Setup filter functionality
-function setupFilters() {
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Update active state
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Apply filter
-            const filter = this.getAttribute('data-filter');
-            applyFilter(filter);
-        });
-    });
-}
-
-// Apply filter to services
-function applyFilter(category) {
-    let filteredServices = [...allServices];
-    
-    if (category !== 'all') {
-        const actualCategory = serviceCategoryMap[category] || category;
-        filteredServices = allServices.filter(service => 
-            service.services.includes(actualCategory)
-        );
-    }
-    
-    // Also apply current search filter
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-    if (searchTerm) {
-        filteredServices = filteredServices.filter(service =>
-            service.name.toLowerCase().includes(searchTerm) ||
-            service.location.toLowerCase().includes(searchTerm) ||
-            service.services.some(s => s.toLowerCase().includes(searchTerm))
-        );
-    }
-    
-    displayServices(filteredServices);
+// Setup all event listeners
+function setupEventListeners() {
+    setupSearch();
+    setupFilterToggle();
+    setupCategoryChips();
+    setupAdvancedFilters();
 }
 
 // Setup search functionality
 function setupSearch() {
-    const searchInput = document.getElementById('searchInput');
+    const searchBox = document.getElementById('searchBox');
     
-    if (!searchInput) {
-        console.error('searchInput element not found!');
-        return;
-    }
+    if (!searchBox) return;
     
     let searchTimeout;
     
-    searchInput.addEventListener('input', function() {
+    searchBox.addEventListener('input', function() {
         clearTimeout(searchTimeout);
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'block';
+        
         searchTimeout = setTimeout(() => {
             performSearch(this.value);
-        }, 300);
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+        }, 500);
     });
 }
 
 // Perform search
 function performSearch(query) {
-    const activeFilter = document.querySelector('.filter-btn.active');
-    if (!activeFilter) return;
+    let results = [...allServices];
     
-    const filterCategory = activeFilter.getAttribute('data-filter');
-    let filteredServices = [...allServices];
-    
-    // Apply category filter first
-    if (filterCategory !== 'all') {
-        const actualCategory = serviceCategoryMap[filterCategory] || filterCategory;
-        filteredServices = allServices.filter(service => 
-            service.services.includes(actualCategory)
-        );
-    }
-    
-    // Then apply search filter
+    // Apply search filter
     if (query.trim()) {
         const searchTerm = query.toLowerCase().trim();
-        filteredServices = filteredServices.filter(service =>
+        results = results.filter(service =>
             service.name.toLowerCase().includes(searchTerm) ||
             service.location.toLowerCase().includes(searchTerm) ||
             service.services.some(s => s.toLowerCase().includes(searchTerm)) ||
-            service.description.toLowerCase().includes(searchTerm)
+            service.description.toLowerCase().includes(searchTerm) ||
+            service.address.toLowerCase().includes(searchTerm)
         );
     }
     
-    displayServices(filteredServices);
+    // Apply current filters
+    results = applyAdvancedFilters(results);
+    
+    filteredServices = results;
+    displayServices(results);
+    updateResultsCount(results.length);
+}
+
+// Setup filter toggle
+function setupFilterToggle() {
+    const filterToggle = document.getElementById('filterToggle');
+    const advancedFilters = document.getElementById('advancedFilters');
+    
+    if (filterToggle && advancedFilters) {
+        filterToggle.addEventListener('click', function() {
+            const isVisible = advancedFilters.style.display === 'block';
+            advancedFilters.style.display = isVisible ? 'none' : 'block';
+            this.textContent = isVisible ? '📍 Advanced Filters' : '📍 Hide Filters';
+        });
+    }
+}
+
+// Setup category chips
+function setupCategoryChips() {
+    const chips = document.querySelectorAll('.category-chips .chip');
+    
+    chips.forEach(chip => {
+        chip.addEventListener('click', function() {
+            // Update active state
+            chips.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            
+            const category = this.getAttribute('data-category');
+            filterByCategory(category);
+        });
+    });
+}
+
+// Filter by category
+function filterByCategory(category) {
+    let results = [...allServices];
+    
+    if (category) {
+        results = results.filter(service => 
+            service.services.includes(category)
+        );
+    }
+    
+    // Apply current search
+    const searchBox = document.getElementById('searchBox');
+    if (searchBox && searchBox.value.trim()) {
+        results = performSearchOnResults(results, searchBox.value);
+    }
+    
+    // Apply advanced filters
+    results = applyAdvancedFilters(results);
+    
+    filteredServices = results;
+    displayServices(results);
+    updateResultsCount(results.length);
+}
+
+// Setup advanced filters
+function setupAdvancedFilters() {
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    const resetFiltersBtn = document.getElementById('resetFilters');
+    
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', applyAdvancedFiltersHandler);
+    }
+    
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', resetFiltersHandler);
+    }
+}
+
+// Apply advanced filters
+function applyAdvancedFiltersHandler() {
+    const categoryCheckboxes = document.querySelectorAll('input[name="category"]:checked');
+    const registeredFilter = document.getElementById('registeredFilter');
+    const sortBy = document.getElementById('sortBy');
+    
+    currentFilters.categories = Array.from(categoryCheckboxes).map(cb => cb.value);
+    currentFilters.registered = registeredFilter ? registeredFilter.value : '';
+    currentFilters.sortBy = sortBy ? sortBy.value : 'newest';
+    
+    let results = [...allServices];
+    
+    // Apply search first
+    const searchBox = document.getElementById('searchBox');
+    if (searchBox && searchBox.value.trim()) {
+        results = performSearchOnResults(results, searchBox.value);
+    }
+    
+    // Apply advanced filters
+    results = applyAdvancedFilters(results);
+    
+    filteredServices = results;
+    displayServices(results);
+    updateResultsCount(results.length);
+}
+
+// Apply advanced filters to results
+function applyAdvancedFilters(results) {
+    let filtered = [...results];
+    
+    // Category filters
+    if (currentFilters.categories.length > 0) {
+        filtered = filtered.filter(service =>
+            currentFilters.categories.some(category =>
+                service.services.includes(category)
+            )
+        );
+    }
+    
+    // Registered filter
+    if (currentFilters.registered) {
+        filtered = filtered.filter(service =>
+            service.registered === currentFilters.registered
+        );
+    }
+    
+    // Sort results
+    filtered = sortServices(filtered, currentFilters.sortBy);
+    
+    return filtered;
+}
+
+// Perform search on given results
+function performSearchOnResults(results, query) {
+    if (!query.trim()) return results;
+    
+    const searchTerm = query.toLowerCase().trim();
+    return results.filter(service =>
+        service.name.toLowerCase().includes(searchTerm) ||
+        service.location.toLowerCase().includes(searchTerm) ||
+        service.services.some(s => s.toLowerCase().includes(searchTerm)) ||
+        service.description.toLowerCase().includes(searchTerm) ||
+        service.address.toLowerCase().includes(searchTerm)
+    );
+}
+
+// Sort services
+function sortServices(services, sortBy) {
+    const sorted = [...services];
+    
+    switch (sortBy) {
+        case 'newest':
+            return sorted.sort((a, b) => new Date(b.dateAdded || b.id) - new Date(a.dateAdded || a.id));
+        case 'oldest':
+            return sorted.sort((a, b) => new Date(a.dateAdded || a.id) - new Date(b.dateAdded || b.id));
+        case 'name':
+            return sorted.sort((a, b) => a.name.localeCompare(b.name));
+        default:
+            return sorted;
+    }
+}
+
+// Reset filters
+function resetFiltersHandler() {
+    // Reset checkboxes
+    document.querySelectorAll('input[name="category"]').forEach(cb => {
+        cb.checked = false;
+    });
+    
+    // Reset selects
+    const registeredFilter = document.getElementById('registeredFilter');
+    const sortBy = document.getElementById('sortBy');
+    
+    if (registeredFilter) registeredFilter.value = '';
+    if (sortBy) sortBy.value = 'newest';
+    
+    // Reset category chips
+    const chips = document.querySelectorAll('.category-chips .chip');
+    chips.forEach(chip => chip.classList.remove('active'));
+    chips[0].classList.add('active'); // Activate "All Services"
+    
+    // Reset filter state
+    currentFilters = {
+        categories: [],
+        registered: '',
+        sortBy: 'newest'
+    };
+    
+    // Show all services
+    const searchBox = document.getElementById('searchBox');
+    if (searchBox) searchBox.value = '';
+    
+    filteredServices = allServices;
+    displayServices(allServices);
+    updateResultsCount(allServices.length);
+}
+
+// Update results count
+function updateResultsCount(count) {
+    const resultsCount = document.getElementById('resultsCount');
+    if (resultsCount) {
+        resultsCount.textContent = count;
+    }
 }
