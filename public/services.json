@@ -6,6 +6,7 @@
         "services": ["Support Coordination"],
         "registered": "Yes",
         "description": "Experienced support coordinator specializing in complex cases and plan management",
+        "aboutMe": "Test field"
         "address": "Mid North Coast, NSW",
         "phone": "0400 000 000",
         "email": "example@gmail.com",
