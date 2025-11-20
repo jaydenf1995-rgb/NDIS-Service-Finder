@@ -1169,4 +1169,76 @@ button:hover {
     transform: translateY(-2px);
     text-decoration: none;
 }
+/* ===== ESSENTIAL ACCESSIBILITY IMPROVEMENTS ===== */
+
+/* Skip to main content link - CRITICAL for screen readers */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: #000;
+    color: #fff;
+    padding: 12px;
+    text-decoration: none;
+    z-index: 1001;
+    font-weight: bold;
+    border-radius: 0 0 4px 0;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Focus styles for keyboard navigation */
+button:focus, 
+a:focus, 
+input:focus, 
+select:focus,
+textarea:focus {
+    outline: 3px solid #ff0000 !important;
+    outline-offset: 2px !important;
+}
+
+/* Ensure sufficient color contrast for critical elements */
+.header-content h1,
+.featured-services h2,
+.welcome-blurb h2 {
+    color: #5a3d8c; /* Darker purple for better contrast */
+}
+
+/* Screen reader only text */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Proper heading hierarchy visual */
+main h1 { font-size: 2em; }
+main h2 { font-size: 1.5em; }
+main h3 { font-size: 1.25em; }
+
+/* Ensure form labels are properly associated */
+form label {
+    cursor: pointer;
+    display: block;
+    margin-bottom: 5px;
+}
+
+/* Image accessibility */
+img:not([alt]) {
+    border: 2px solid red; /* Visual indicator for missing alt text */
+}
+
+/* Link accessibility */
+a[href]:not([class]) {
+    text-decoration: underline;
+    color: #5a3d8c;
+}
 
