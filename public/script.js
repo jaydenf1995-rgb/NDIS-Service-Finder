@@ -23,16 +23,17 @@ async function initializeApp() {
         initializeStats();
         displayServices(allServices);
         setupEventListeners();
+        setupServiceCardClicks(); // Add this line
         updateResultsCount(allServices.length);
         
         console.log('App initialized successfully');
     } catch (error) {
         console.error('Failed to initialize app:', error);
-        // Use fallback data
         allServices = getFallbackServices();
         initializeStats();
         displayServices(allServices);
         setupEventListeners();
+        setupServiceCardClicks(); // Add this line
         updateResultsCount(allServices.length);
     }
 }
@@ -466,4 +467,24 @@ function updateResultsCount(count) {
     if (resultsCount) {
         resultsCount.textContent = count;
     }
+}
+// Make service cards clickable and redirect to details page
+function setupServiceCardClicks() {
+    document.addEventListener('click', function(event) {
+        // Check if click was on a service card or its children
+        const serviceCard = event.target.closest('.service-card');
+        if (serviceCard) {
+            // Find the service ID from the card
+            const serviceName = serviceCard.querySelector('h3').textContent;
+            const services = document.querySelectorAll('.service-card');
+            let serviceIndex = Array.from(services).indexOf(serviceCard);
+            
+            // Get the actual service data
+            const service = filteredServices[serviceIndex] || allServices[serviceIndex];
+            if (service) {
+                // Redirect to service details page with service ID
+                window.location.href = `service-details.html?id=${service.id}`;
+            }
+        }
+    });
 }
