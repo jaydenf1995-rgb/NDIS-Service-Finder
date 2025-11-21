@@ -1713,5 +1713,91 @@ a[href]:not([class]) {
 .service-card:hover::after {
     opacity: 0.7;
 }
+/* ===== RATING STYLES FOR SERVICE CARDS ===== */
+.service-card-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.rating-stars-small {
+    font-size: 1em;
+    color: #ffc107;
+    letter-spacing: 1px;
+}
+
+.rating-count {
+    font-size: 0.85em;
+    color: #666;
+    font-weight: bold;
+}
+
+.no-reviews-text {
+    font-size: 0.85em;
+    color: #999;
+    font-style: italic;
+}
+
+/* ===== SERVICE CARD CLICKABLE STYLES ===== */
+.service-card {
+    cursor: pointer;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-left-color: var(--color-1);
+}
+
+/* ===== RATING STYLES FOR SERVICE DETAILS PAGE ===== */
+.service-rating-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 10px 0;
+}
+
+.rating-stars-large {
+    font-size: 1.8em;
+    color: #ffc107;
+    letter-spacing: 2px;
+}
+
+.rating-text-large {
+    font-size: 1.1em;
+    color: white;
+    opacity: 0.9;
+}
+
+.rating-average {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .service-rating-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .rating-stars-large {
+        font-size: 1.5em;
+    }
+    
+    .service-card-rating {
+        gap: 6px;
+    }
+    
+    .rating-stars-small {
+        font-size: 0.9em;
+    }
+}
 
 
