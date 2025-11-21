@@ -23,7 +23,6 @@ async function loadServiceDetails() {
     }
 
     try {
-        // Load services data
         const services = await loadServices();
         currentService = services.find(service => service.id == serviceId);
         
@@ -32,10 +31,7 @@ async function loadServiceDetails() {
             return;
         }
 
-        // Load reviews from localStorage
         loadReviews(serviceId);
-        
-        // Display service details
         displayServiceDetails();
         
     } catch (error) {
@@ -66,7 +62,7 @@ function loadReviews(serviceId) {
     }
 }
 
-// Display service details
+// Display service details with stars at top
 function displayServiceDetails() {
     const serviceDetails = document.getElementById('serviceDetails');
     const loadingMessage = document.getElementById('loadingMessage');
@@ -89,6 +85,14 @@ function displayServiceDetails() {
                 </div>
                 <div class="service-basic-info">
                     <h1>${currentService.name}</h1>
+                    
+                    <!-- Stars at the top under the name -->
+                    <div class="service-rating-header">
+                        <div class="rating-stars-large">${generateStarRating(calculateAverageRating())}</div>
+                        <span class="rating-text-large">${reviews.length} review${reviews.length !== 1 ? 's' : ''}</span>
+                        <span class="rating-average">${calculateAverageRating().toFixed(1)}/5.0</span>
+                    </div>
+                    
                     <p class="service-location">📍 ${currentService.location}</p>
                     <p class="service-registered">${currentService.registered === 'Yes' ? '✅ Registered NDIS Provider' : '❌ Not Registered'}</p>
                     
@@ -105,9 +109,8 @@ function displayServiceDetails() {
                 <div class="service-description-full">
                     <p>${currentService.description}</p>
                     
-                    <!-- This is where you'll display the "Description of Services/About Me" from Google Forms -->
                     <div id="aboutMeContent" class="about-me-content">
-                        <p><em>Detailed service description will appear here once provided through Google Forms.</em></p>
+                        <p>${currentService.aboutMe || '<em>Detailed service description will appear here once provided through Google Forms.</em>'}</p>
                     </div>
                 </div>
             </div>
@@ -133,10 +136,6 @@ function displayServiceDetails() {
             <div class="reviews-section">
                 <div class="reviews-header">
                     <h2>Reviews & Feedback</h2>
-                    <div class="average-rating">
-                        <span class="rating-stars">${generateStarRating(calculateAverageRating())}</span>
-                        <span class="rating-text">${reviews.length} review${reviews.length !== 1 ? 's' : ''}</span>
-                    </div>
                 </div>
 
                 <div class="add-review-form">
@@ -197,7 +196,6 @@ function displayServiceDetails() {
         </div>
     `;
 
-    // Setup review form submission
     document.getElementById('reviewForm').addEventListener('submit', handleReviewSubmit);
 }
 
@@ -229,11 +227,10 @@ function handleReviewSubmit(event) {
         serviceId: currentService.id
     };
     
-    reviews.unshift(newReview); // Add to beginning of array
+    reviews.unshift(newReview);
     saveReviews();
-    displayServiceDetails(); // Refresh to show new review
+    displayServiceDetails();
     
-    // Reset form
     form.reset();
     alert('Thank you for your review!');
 }
@@ -258,17 +255,14 @@ function generateStarRating(rating) {
     
     let stars = '';
     
-    // Full stars
     for (let i = 0; i < fullStars; i++) {
         stars += '★';
     }
     
-    // Half star
     if (hasHalfStar) {
         stars += '½';
     }
     
-    // Empty stars
     for (let i = 0; i < emptyStars; i++) {
         stars += '☆';
     }
