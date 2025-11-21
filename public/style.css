@@ -2188,19 +2188,3 @@ a[href]:not([class]) {
         height: 180px;
     }
 }
-/* Temporary debug styles */
-nav {
-    border: 2px solid red !important; /* Highlight nav area */
-}
-
-nav a {
-    border: 1px solid blue !important; /* Highlight each link */
-    background: yellow !important; /* Make links very visible */
-    color: black !important;
-}
-
-/* Check if About link is being hidden */
-nav a[href="about.html"] {
-    background: limegreen !important; /* Make About link stand out */
-    font-weight: bold !important;
-}
