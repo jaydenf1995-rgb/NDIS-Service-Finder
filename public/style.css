@@ -1799,5 +1799,337 @@ a[href]:not([class]) {
         font-size: 0.9em;
     }
 }
+/* ===== ABOUT US PAGE STYLES ===== */
+.about-page {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Hero Section */
+.about-hero {
+    text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(135deg, var(--color-1) 0%, var(--color-4) 100%);
+    color: white;
+    border-radius: 15px;
+    margin-bottom: 50px;
+}
+
+.about-hero h1 {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    color: white;
+}
+
+.hero-subtitle {
+    font-size: 1.3em;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* About Sections */
+.about-section {
+    margin-bottom: 60px;
+}
+
+.about-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    align-items: center;
+}
+
+.about-text h2 {
+    color: var(--color-4);
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+.about-text p {
+    font-size: 1.1em;
+    line-height: 1.7;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.about-image .image-placeholder {
+    background: var(--color-2);
+    border-radius: 10px;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-4);
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+/* Mission Section */
+.mission-section {
+    margin-bottom: 60px;
+}
+
+.mission-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.mission-card {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+    border-left: 4px solid var(--color-4);
+    transition: transform 0.3s ease;
+}
+
+.mission-card:hover {
+    transform: translateY(-5px);
+}
+
+.mission-icon {
+    font-size: 3em;
+    margin-bottom: 20px;
+}
+
+.mission-card h3 {
+    color: var(--color-4);
+    margin-bottom: 15px;
+    font-size: 1.4em;
+}
+
+.mission-card p {
+    color: #666;
+    line-height: 1.6;
+}
+
+/* Features Section */
+.features-section {
+    margin-bottom: 60px;
+}
+
+.features-section h2 {
+    text-align: center;
+    color: var(--color-4);
+    margin-bottom: 40px;
+    font-size: 2em;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.feature-card {
+    background: white;
+    padding: 30px 25px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    border-left: 4px solid var(--color-4);
+}
+
+.feature-card h3 {
+    color: var(--color-4);
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.feature-card p {
+    color: #666;
+    line-height: 1.6;
+}
+
+/* Providers Section */
+.providers-section {
+    background: var(--color-3);
+    padding: 50px;
+    border-radius: 15px;
+    margin-bottom: 60px;
+}
+
+.providers-text h2 {
+    color: var(--color-4);
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+.providers-text p {
+    font-size: 1.1em;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.providers-text ul {
+    margin: 25px 0;
+    padding-left: 20px;
+}
+
+.providers-text li {
+    margin-bottom: 10px;
+    color: #555;
+    line-height: 1.6;
+}
+
+.providers-text strong {
+    color: var(--color-4);
+}
+
+/* Founder Section */
+.founder-section {
+    margin-bottom: 60px;
+}
+
+.founder-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 50px;
+    align-items: center;
+}
+
+.founder-image .image-placeholder {
+    background: var(--color-2);
+    border-radius: 50%;
+    height: 200px;
+    width: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-4);
+    font-weight: bold;
+    margin: 0 auto;
+}
+
+.founder-message h2 {
+    color: var(--color-4);
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+.founder-message p {
+    font-size: 1.1em;
+    line-height: 1.7;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.founder-signature {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px solid var(--color-2);
+}
+
+.founder-signature strong {
+    display: block;
+    color: var(--color-4);
+    font-size: 1.1em;
+}
+
+.founder-signature span {
+    color: #666;
+    font-size: 0.9em;
+}
+
+/* Contact CTA */
+.contact-cta {
+    background: linear-gradient(135deg, var(--color-1) 0%, var(--color-4) 100%);
+    color: white;
+    padding: 50px;
+    border-radius: 15px;
+    text-align: center;
+}
+
+.contact-cta h2 {
+    color: white;
+    margin-bottom: 15px;
+    font-size: 2em;
+}
+
+.contact-cta p {
+    font-size: 1.2em;
+    opacity: 0.9;
+    margin-bottom: 30px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .about-hero {
+        padding: 40px 20px;
+    }
+    
+    .about-hero h1 {
+        font-size: 2em;
+    }
+    
+    .about-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    .mission-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .providers-section {
+        padding: 30px 20px;
+    }
+    
+    .founder-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        text-align: center;
+    }
+    
+    .founder-image .image-placeholder {
+        height: 150px;
+        width: 150px;
+    }
+    
+    .contact-cta {
+        padding: 30px 20px;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .cta-buttons .primary-btn,
+    .cta-buttons .secondary-btn {
+        width: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .about-hero h1 {
+        font-size: 1.8em;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1em;
+    }
+    
+    .mission-card,
+    .feature-card {
+        padding: 25px 20px;
+    }
+}
 
 
