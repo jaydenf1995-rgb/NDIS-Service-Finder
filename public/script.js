@@ -23,7 +23,7 @@ async function initializeApp() {
         initializeStats();
         displayServices(allServices);
         setupEventListeners();
-        setupServiceCardClicks(); // Add this line
+        setupServiceCardClicks();
         updateResultsCount(allServices.length);
         
         console.log('App initialized successfully');
@@ -33,7 +33,7 @@ async function initializeApp() {
         initializeStats();
         displayServices(allServices);
         setupEventListeners();
-        setupServiceCardClicks(); // Add this line
+        setupServiceCardClicks();
         updateResultsCount(allServices.length);
     }
 }
@@ -57,7 +57,7 @@ async function loadServices() {
     }
 }
 
-// Fallback data in case JSON fails - UPDATED WITH GOOGLE FORM CATEGORIES
+// Fallback data in case JSON fails
 function getFallbackServices() {
     return [
         {
@@ -67,10 +67,11 @@ function getFallbackServices() {
             "services": ["Support Coordination"],
             "registered": "Yes",
             "description": "Experienced support coordinator specializing in complex cases and plan management",
+            "aboutMe": "With over 5 years of experience in the disability sector, I specialize in helping participants navigate the NDIS system.",
             "address": "17 Dugdale Avenue, Taree",
             "phone": "0478105741",
             "email": "jaydenf1995@gmail.com",
-            "photo": "https://drive.google.com/uc?export=view&id=1HUHwtcEqIPGeDxd7COGsyvp_zMNOiHuW",
+            "photo": "images/jayden-farmer.jpg",
             "dateAdded": new Date().toISOString()
         },
         {
@@ -80,63 +81,12 @@ function getFallbackServices() {
             "services": ["Support Worker", "Respite"],
             "registered": "Yes",
             "description": "Dedicated support worker with 5 years experience in community access and personal care",
+            "aboutMe": "I'm passionate about supporting individuals to live their best lives.",
             "address": "123 Main Street, Sydney",
             "phone": "0400 000 001",
             "email": "sarah@example.com",
-            "photo": "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face",
+            "photo": "images/sarah-johnson.jpg",
             "dateAdded": new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-            "id": 3,
-            "name": "Michael Chen",
-            "location": "Melbourne, VIC",
-            "services": ["Occupational Therapy", "Behavioural Specialist"],
-            "registered": "Yes",
-            "description": "Therapist specializing in behavioral support and occupational therapy",
-            "address": "456 Collins Street, Melbourne",
-            "phone": "0400 000 002",
-            "email": "michael@example.com",
-            "photo": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
-            "dateAdded": new Date(Date.now() - 172800000).toISOString()
-        },
-        {
-            "id": 4,
-            "name": "Sunrise Day Programs",
-            "location": "Brisbane, QLD",
-            "services": ["Day Programs", "SIL Provider"],
-            "registered": "Yes",
-            "description": "Comprehensive day programs and supported independent living services",
-            "address": "789 Queen Street, Brisbane",
-            "phone": "0400 000 003",
-            "email": "info@sunriseday.com",
-            "photo": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+",
-            "dateAdded": new Date(Date.now() - 259200000).toISOString()
-        },
-        {
-            "id": 5,
-            "name": "David Wilson - Physio Care",
-            "location": "Perth, WA",
-            "services": ["Physiotherapist"],
-            "registered": "Yes",
-            "description": "NDIS registered physiotherapist specializing in mobility and rehabilitation",
-            "address": "321 Murray Street, Perth",
-            "phone": "0400 000 004",
-            "email": "david@physiocare.com",
-            "photo": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+",
-            "dateAdded": new Date(Date.now() - 345600000).toISOString()
-        },
-        {
-            "id": 6,
-            "name": "Plan Management Experts",
-            "location": "Adelaide, SA",
-            "services": ["Plan Management"],
-            "registered": "No",
-            "description": "Expert plan management services to help you manage your NDIS funding",
-            "address": "654 Rundle Mall, Adelaide",
-            "phone": "0400 000 005",
-            "email": "admin@planmanagement.com",
-            "photo": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+",
-            "dateAdded": new Date(Date.now() - 432000000).toISOString()
         }
     ];
 }
@@ -190,9 +140,14 @@ function displayServices(services) {
     }
 }
 
-// Create service card HTML
+// Create service card HTML with stars
 function createServiceCard(service) {
     const placeholderImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+';
+    
+    // Calculate rating for this service
+    const serviceReviews = getServiceReviews(service.id);
+    const averageRating = calculateServiceRating(serviceReviews);
+    const reviewCount = serviceReviews.length;
     
     return `
     <li class="service-card">
@@ -203,6 +158,13 @@ function createServiceCard(service) {
                  onerror="this.src='${placeholderImage}'">
             <div class="provider-info">
                 <h3>${service.name}</h3>
+                
+                <!-- Stars on service card -->
+                <div class="service-card-rating">
+                    <div class="rating-stars-small">${generateStarRatingSmall(averageRating)}</div>
+                    ${reviewCount > 0 ? `<span class="rating-count">(${reviewCount})</span>` : '<span class="no-reviews-text">No reviews yet</span>'}
+                </div>
+                
                 <p class="provider-location">📍 ${service.location}</p>
                 <p class="provider-registered">${service.registered === 'Yes' ? '✅ Registered NDIS Provider' : '❌ Not Registered'}</p>
             </div>
@@ -222,6 +184,72 @@ function createServiceCard(service) {
         </div>
     </li>
     `;
+}
+
+// Rating helper functions
+function getServiceReviews(serviceId) {
+    const storedReviews = localStorage.getItem(`reviews_${serviceId}`);
+    return storedReviews ? JSON.parse(storedReviews) : [];
+}
+
+function calculateServiceRating(reviews) {
+    if (reviews.length === 0) return 0;
+    const total = reviews.reduce((sum, review) => sum + review.rating, 0);
+    return total / reviews.length;
+}
+
+function generateStarRatingSmall(rating) {
+    return generateStarRating(rating);
+}
+
+function generateStarRating(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    let stars = '';
+    
+    // Full stars
+    for (let i = 0; i < fullStars; i++) {
+        stars += '★';
+    }
+    
+    // Half star
+    if (hasHalfStar) {
+        stars += '½';
+    }
+    
+    // Empty stars
+    for (let i = 0; i < emptyStars; i++) {
+        stars += '☆';
+    }
+    
+    return stars;
+}
+
+// Make service cards clickable
+function setupServiceCardClicks() {
+    document.addEventListener('click', function(event) {
+        const serviceCard = event.target.closest('.service-card');
+        if (serviceCard) {
+            // Add click feedback
+            serviceCard.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                serviceCard.style.transform = '';
+            }, 150);
+            
+            // Find the service
+            const services = document.querySelectorAll('.service-card');
+            let serviceIndex = Array.from(services).indexOf(serviceCard);
+            const service = filteredServices[serviceIndex] || allServices[serviceIndex];
+            
+            if (service) {
+                setTimeout(() => {
+                    window.location.href = `service-details.html?id=${service.id}`;
+                }, 200);
+            }
+        }
+    });
 }
 
 // Setup all event listeners
@@ -256,7 +284,6 @@ function setupSearch() {
 function performSearch(query) {
     let results = [...allServices];
     
-    // Apply search filter
     if (query.trim()) {
         const searchTerm = query.toLowerCase().trim();
         results = results.filter(service =>
@@ -268,9 +295,7 @@ function performSearch(query) {
         );
     }
     
-    // Apply current filters
     results = applyAdvancedFilters(results);
-    
     filteredServices = results;
     displayServices(results);
     updateResultsCount(results.length);
@@ -290,13 +315,12 @@ function setupFilterToggle() {
     }
 }
 
-// Setup category chips - UPDATED FOR GOOGLE FORM CATEGORIES
+// Setup category chips
 function setupCategoryChips() {
     const chips = document.querySelectorAll('.category-chips .chip');
     
     chips.forEach(chip => {
         chip.addEventListener('click', function() {
-            // Update active state
             chips.forEach(c => c.classList.remove('active'));
             this.classList.add('active');
             
@@ -306,7 +330,7 @@ function setupCategoryChips() {
     });
 }
 
-// Filter by category - UPDATED FOR GOOGLE FORM CATEGORIES
+// Filter by category
 function filterByCategory(category) {
     let results = [...allServices];
     
@@ -316,21 +340,18 @@ function filterByCategory(category) {
         );
     }
     
-    // Apply current search
     const searchBox = document.getElementById('searchBox');
     if (searchBox && searchBox.value.trim()) {
         results = performSearchOnResults(results, searchBox.value);
     }
     
-    // Apply advanced filters
     results = applyAdvancedFilters(results);
-    
     filteredServices = results;
     displayServices(results);
     updateResultsCount(results.length);
 }
 
-// Setup advanced filters - UPDATED FOR GOOGLE FORM CATEGORIES
+// Setup advanced filters
 function setupAdvancedFilters() {
     const applyFiltersBtn = document.getElementById('applyFilters');
     const resetFiltersBtn = document.getElementById('resetFilters');
@@ -344,7 +365,7 @@ function setupAdvancedFilters() {
     }
 }
 
-// Apply advanced filters - UPDATED FOR GOOGLE FORM CATEGORIES
+// Apply advanced filters
 function applyAdvancedFiltersHandler() {
     const categoryCheckboxes = document.querySelectorAll('input[name="category"]:checked');
     const registeredFilter = document.getElementById('registeredFilter');
@@ -356,25 +377,21 @@ function applyAdvancedFiltersHandler() {
     
     let results = [...allServices];
     
-    // Apply search first
     const searchBox = document.getElementById('searchBox');
     if (searchBox && searchBox.value.trim()) {
         results = performSearchOnResults(results, searchBox.value);
     }
     
-    // Apply advanced filters
     results = applyAdvancedFilters(results);
-    
     filteredServices = results;
     displayServices(results);
     updateResultsCount(results.length);
 }
 
-// Apply advanced filters to results - UPDATED FOR GOOGLE FORM CATEGORIES
+// Apply advanced filters to results
 function applyAdvancedFilters(results) {
     let filtered = [...results];
     
-    // Category filters
     if (currentFilters.categories.length > 0) {
         filtered = filtered.filter(service =>
             currentFilters.categories.some(category =>
@@ -383,16 +400,13 @@ function applyAdvancedFilters(results) {
         );
     }
     
-    // Registered filter
     if (currentFilters.registered) {
         filtered = filtered.filter(service =>
             service.registered === currentFilters.registered
         );
     }
     
-    // Sort results
     filtered = sortServices(filtered, currentFilters.sortBy);
-    
     return filtered;
 }
 
@@ -426,33 +440,28 @@ function sortServices(services, sortBy) {
     }
 }
 
-// Reset filters - UPDATED FOR GOOGLE FORM CATEGORIES
+// Reset filters
 function resetFiltersHandler() {
-    // Reset checkboxes
     document.querySelectorAll('input[name="category"]').forEach(cb => {
         cb.checked = false;
     });
     
-    // Reset selects
     const registeredFilter = document.getElementById('registeredFilter');
     const sortBy = document.getElementById('sortBy');
     
     if (registeredFilter) registeredFilter.value = '';
     if (sortBy) sortBy.value = 'newest';
     
-    // Reset category chips
     const chips = document.querySelectorAll('.category-chips .chip');
     chips.forEach(chip => chip.classList.remove('active'));
     if (chips.length > 0) chips[0].classList.add('active');
     
-    // Reset filter state
     currentFilters = {
         categories: [],
         registered: '',
         sortBy: 'newest'
     };
     
-    // Show all services
     const searchBox = document.getElementById('searchBox');
     if (searchBox) searchBox.value = '';
     
@@ -467,24 +476,4 @@ function updateResultsCount(count) {
     if (resultsCount) {
         resultsCount.textContent = count;
     }
-}
-// Make service cards clickable and redirect to details page
-function setupServiceCardClicks() {
-    document.addEventListener('click', function(event) {
-        // Check if click was on a service card or its children
-        const serviceCard = event.target.closest('.service-card');
-        if (serviceCard) {
-            // Find the service ID from the card
-            const serviceName = serviceCard.querySelector('h3').textContent;
-            const services = document.querySelectorAll('.service-card');
-            let serviceIndex = Array.from(services).indexOf(serviceCard);
-            
-            // Get the actual service data
-            const service = filteredServices[serviceIndex] || allServices[serviceIndex];
-            if (service) {
-                // Redirect to service details page with service ID
-                window.location.href = `service-details.html?id=${service.id}`;
-            }
-        }
-    });
 }
