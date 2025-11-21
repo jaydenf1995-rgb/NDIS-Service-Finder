@@ -2131,17 +2131,29 @@ a[href]:not([class]) {
         padding: 25px 20px;
     }
 }
-/* Founder Photo Styles */
+/* Founder Photo Styles - Updated for 25% bigger rectangle with rounded edges */
 .founder-photo {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    object-fit: cover; /* This ensures proper cropping without stretching */
-    object-position: center; /* Focus on the center of the image */
+    width: 250px; /* 25% bigger than 200px */
+    height: 250px; /* 25% bigger than 200px */
+    border-radius: 20px; /* Soft rounded edges instead of circle */
+    object-fit: cover;
+    object-position: center;
     border: 4px solid var(--color-4);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    image-rendering: -webkit-optimize-contrast; /* Better rendering for WebKit browsers */
-    image-rendering: crisp-edges; /* Better rendering for other browsers */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15); /* Enhanced shadow for larger image */
+    transition: transform 0.3s ease; /* Smooth hover effect */
+}
+
+.founder-photo:hover {
+    transform: scale(1.02); /* Subtle hover effect */
+}
+
+/* Update the container to match the new size */
+.founder-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 250px; /* Match new photo width */
+    height: 250px; /* Match new photo height */
 }
 
 /* Make sure the container doesn't distort the image */
@@ -2153,25 +2165,26 @@ a[href]:not([class]) {
     height: 200px;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
     .founder-photo {
-        width: 180px;
-        height: 180px;
+        width: 200px; /* Slightly smaller on tablet */
+        height: 200px;
+        border-radius: 15px;
     }
     .founder-image {
-        width: 180px;
-        height: 180px;
+        width: 200px;
+        height: 200px;
     }
 }
 
 @media (max-width: 480px) {
     .founder-photo {
-        width: 150px;
-        height: 150px;
+        width: 180px; /* Slightly smaller on mobile */
+        height: 180px;
+        border-radius: 12px;
     }
     .founder-image {
-        width: 150px;
-        height: 150px;
+        width: 180px;
+        height: 180px;
     }
 }
