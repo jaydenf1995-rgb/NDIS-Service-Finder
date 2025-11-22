@@ -21,9 +21,9 @@ async function initializeApp() {
         
         // Initialize the app
         initializeStats();
-        await displayServices(allServices); // Make this async
+        await displayServices(allServices);
         setupEventListeners();
-        setupServiceCardClicks();
+        setupServiceCardClicks(); // Make sure this is called
         updateResultsCount(allServices.length);
         
         console.log('App initialized successfully');
@@ -33,7 +33,7 @@ async function initializeApp() {
         initializeStats();
         displayServices(allServices);
         setupEventListeners();
-        setupServiceCardClicks();
+        setupServiceCardClicks(); // And in error case too
         updateResultsCount(allServices.length);
     }
 }
@@ -106,12 +106,17 @@ function initializeStats() {
     }
 }
 
-// Display services in the UI - UPDATED TO BE ASYNC
+// Display services in the UI - UPDATED TO RE-ATTACH CLICKS
 async function displayServices(services) {
     const serviceList = document.getElementById('serviceList');
     const recentServiceList = document.getElementById('recentServiceList');
     const noResults = document.getElementById('noResults');
     const noRecentResults = document.getElementById('noRecentResults');
+    
+    console.log(`🔄 Displaying ${services.length} services`);
+    
+    // Update filteredServices for click handling
+    filteredServices = services;
     
     // Display all services
     if (serviceList) {
@@ -123,11 +128,13 @@ async function displayServices(services) {
             const cards = await Promise.all(services.map(service => createServiceCard(service)));
             serviceList.innerHTML = cards.join('');
             if (noResults) noResults.style.display = 'none';
+            
+            console.log(`✅ Displayed ${services.length} services in main grid`);
         }
     }
     
-    // Display recent services (last 3)
-    if (recentServiceList) {
+    // Display recent services (last 3) - only on index page
+    if (recentServiceList && window.location.pathname.includes('index.html')) {
         const recentServices = services
             .sort((a, b) => new Date(b.dateAdded || b.id) - new Date(a.dateAdded || a.id))
             .slice(0, 3);
@@ -139,8 +146,12 @@ async function displayServices(services) {
             const recentCards = await Promise.all(recentServices.map(service => createServiceCard(service)));
             recentServiceList.innerHTML = recentCards.join('');
             if (noRecentResults) noRecentResults.style.display = 'none';
+            
+            console.log(`✅ Displayed ${recentServices.length} recent services`);
         }
     }
+    
+    // Click handlers are automatically handled by event delegation
 }
 
 // Create service card HTML with stars - UPDATED TO BE ASYNC
@@ -221,29 +232,43 @@ function generateStarRating(rating) {
     return stars;
 }
 
-// Make service cards clickable
+// Make service cards clickable - UPDATED VERSION
 function setupServiceCardClicks() {
+    // Use event delegation instead of attaching to each card
     document.addEventListener('click', function(event) {
         const serviceCard = event.target.closest('.service-card');
         if (serviceCard) {
             // Add click feedback
             serviceCard.style.transform = 'scale(0.98)';
+            serviceCard.style.transition = 'transform 0.15s ease';
+            
             setTimeout(() => {
                 serviceCard.style.transform = '';
             }, 150);
             
-            // Find the service
-            const services = document.querySelectorAll('.service-card');
-            let serviceIndex = Array.from(services).indexOf(serviceCard);
-            const service = filteredServices[serviceIndex] || allServices[serviceIndex];
+            // Find the service - improved method
+            const serviceIndex = Array.from(document.querySelectorAll('.service-card')).indexOf(serviceCard);
+            let service;
+            
+            // Try filteredServices first, then allServices
+            if (filteredServices.length > 0 && filteredServices[serviceIndex]) {
+                service = filteredServices[serviceIndex];
+            } else if (allServices[serviceIndex]) {
+                service = allServices[serviceIndex];
+            }
             
             if (service) {
+                console.log('🔧 Clicked service:', service.name, 'ID:', service.id);
                 setTimeout(() => {
                     window.location.href = `service-details.html?id=${service.id}`;
                 }, 200);
+            } else {
+                console.error('❌ Could not find service for clicked card');
             }
         }
     });
+    
+    console.log('✅ Service card click handlers setup');
 }
 
 // Setup all event listeners
@@ -508,3 +533,4 @@ setTimeout(checkSupabaseStatus, 1000);
 
 // Also check when window loads
 window.addEventListener('load', checkSupabaseStatus);
+
