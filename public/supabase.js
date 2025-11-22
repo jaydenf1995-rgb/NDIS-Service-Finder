@@ -100,3 +100,40 @@ window.supabaseClient = {
 };
 
 console.log('Supabase client initialized');
+// Enhanced debugging for supabase.js
+console.log('✅ supabase.js loaded successfully');
+console.log('✅ Supabase URL:', SUPABASE_URL);
+console.log('✅ Supabase client initialized:', !!supabase);
+
+// Test the connection immediately
+async function testConnection() {
+    try {
+        console.log('🧪 Testing Supabase connection...');
+        const { data, error } = await supabase
+            .from('reviews')
+            .select('count')
+            .limit(1);
+
+        if (error) {
+            console.error('❌ Supabase connection test failed:', error);
+        } else {
+            console.log('✅ Supabase connection test passed!');
+            
+            // Get total review count
+            const { count, error: countError } = await supabase
+                .from('reviews')
+                .select('*', { count: 'exact', head: true });
+                
+            if (countError) {
+                console.error('❌ Error counting reviews:', countError);
+            } else {
+                console.log(`✅ Total reviews in database: ${count}`);
+            }
+        }
+    } catch (error) {
+        console.error('❌ Supabase test error:', error);
+    }
+}
+
+// Run the test
+testConnection();
