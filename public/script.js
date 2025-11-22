@@ -269,10 +269,6 @@ function setupServiceCardClicks() {
     
     console.log('✅ Service card click handler setup complete');
 }
-    });
-    
-    console.log('✅ Service card click handlers setup');
-}
 
 // Setup all event listeners
 function setupEventListeners() {
@@ -536,6 +532,7 @@ setTimeout(checkSupabaseStatus, 1000);
 
 // Also check when window loads
 window.addEventListener('load', checkSupabaseStatus);
+
 
 
 
