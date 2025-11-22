@@ -11,7 +11,6 @@ let currentFilters = {
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('DOM loaded - initializing app...');
     await initializeApp();
-    initializeReviewSystem();
 });
 
 async function initializeApp() {
@@ -22,7 +21,7 @@ async function initializeApp() {
         
         // Initialize the app
         initializeStats();
-        displayServices(allServices);
+        await displayServices(allServices); // Make this async
         setupEventListeners();
         setupServiceCardClicks();
         updateResultsCount(allServices.length);
@@ -37,90 +36,6 @@ async function initializeApp() {
         setupServiceCardClicks();
         updateResultsCount(allServices.length);
     }
-}
-
-// Review System Functions
-function initializeReviewSystem() {
-    loadReviews();
-    
-    const reviewForm = document.getElementById('reviewForm');
-    if (reviewForm) {
-        reviewForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            addReview();
-        });
-    }
-}
-
-function addReview() {
-    const name = document.getElementById('reviewerName').value.trim();
-    const rating = document.getElementById('reviewRating').value;
-    const comment = document.getElementById('reviewComment').value.trim();
-    
-    if (!name || !rating || !comment) {
-        alert('Please fill in all fields');
-        return;
-    }
-    
-    const review = {
-        id: Date.now(),
-        name: name,
-        rating: parseInt(rating),
-        comment: comment,
-        date: new Date().toLocaleDateString('en-AU'),
-        timestamp: new Date().getTime()
-    };
-    
-    // Get existing reviews
-    const existingReviews = JSON.parse(localStorage.getItem('ndisReviews') || '[]');
-    
-    // Add new review
-    existingReviews.unshift(review);
-    
-    // Save back to localStorage (limit to 100 reviews to prevent storage issues)
-    const limitedReviews = existingReviews.slice(0, 100);
-    localStorage.setItem('ndisReviews', JSON.stringify(limitedReviews));
-    
-    // Clear form
-    document.getElementById('reviewForm').reset();
-    
-    // Reload reviews
-    loadReviews();
-    
-    // Show success message
-    alert('Thank you for your review!');
-}
-
-function loadReviews() {
-    const reviewsContainer = document.getElementById('reviewsContainer');
-    if (!reviewsContainer) return;
-    
-    const reviews = JSON.parse(localStorage.getItem('ndisReviews') || '[]');
-    
-    if (reviews.length === 0) {
-        reviewsContainer.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to leave a review!</p>';
-        return;
-    }
-    
-    reviewsContainer.innerHTML = reviews.map(review => `
-        <div class="review-item">
-            <div class="review-header">
-                <strong>${escapeHtml(review.name)}</strong>
-                <div class="review-rating">
-                    ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
-                    <span class="rating-value">(${review.rating}/5)</span>
-                </div>
-            </div>
-            <div class="review-date">${review.date}</div>
-            <div class="review-comment">${escapeHtml(review.comment)}</div>
-        </div>
-    `).join('');
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 // Load services from JSON file
@@ -191,8 +106,8 @@ function initializeStats() {
     }
 }
 
-// Display services in the UI
-function displayServices(services) {
+// Display services in the UI - UPDATED TO BE ASYNC
+async function displayServices(services) {
     const serviceList = document.getElementById('serviceList');
     const recentServiceList = document.getElementById('recentServiceList');
     const noResults = document.getElementById('noResults');
@@ -204,7 +119,9 @@ function displayServices(services) {
             serviceList.innerHTML = '';
             if (noResults) noResults.style.display = 'block';
         } else {
-            serviceList.innerHTML = services.map(service => createServiceCard(service)).join('');
+            // Create cards asynchronously
+            const cards = await Promise.all(services.map(service => createServiceCard(service)));
+            serviceList.innerHTML = cards.join('');
             if (noResults) noResults.style.display = 'none';
         }
     }
@@ -219,20 +136,27 @@ function displayServices(services) {
             recentServiceList.innerHTML = '';
             if (noRecentResults) noRecentResults.style.display = 'block';
         } else {
-            recentServiceList.innerHTML = recentServices.map(service => createServiceCard(service)).join('');
+            const recentCards = await Promise.all(recentServices.map(service => createServiceCard(service)));
+            recentServiceList.innerHTML = recentCards.join('');
             if (noRecentResults) noRecentResults.style.display = 'none';
         }
     }
 }
 
-// Create service card HTML with stars
-function createServiceCard(service) {
+// Create service card HTML with stars - UPDATED TO BE ASYNC
+async function createServiceCard(service) {
     const placeholderImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+';
     
-    // Calculate rating for this service
-    const serviceReviews = getServiceReviews(service.id);
-    const averageRating = calculateServiceRating(serviceReviews);
-    const reviewCount = serviceReviews.length;
+    // Get reviews from Supabase instead of localStorage
+    let serviceReviews = [];
+    let averageRating = 0;
+    let reviewCount = 0;
+    
+    if (window.supabaseClient) {
+        serviceReviews = await window.supabaseClient.getServiceReviews(service.id);
+        averageRating = await window.supabaseClient.getServiceAverageRating(service.id);
+        reviewCount = serviceReviews.length;
+    }
     
     return `
     <li class="service-card">
@@ -246,7 +170,7 @@ function createServiceCard(service) {
                 
                 <!-- Stars on service card -->
                 <div class="service-card-rating">
-                    <div class="rating-stars-small">${generateStarRatingSmall(averageRating)}</div>
+                    <div class="rating-stars-small">${generateStarRating(averageRating)}</div>
                     ${reviewCount > 0 ? `<span class="rating-count">(${reviewCount})</span>` : '<span class="no-reviews-text">No reviews yet</span>'}
                 </div>
                 
@@ -272,21 +196,6 @@ function createServiceCard(service) {
 }
 
 // Rating helper functions
-function getServiceReviews(serviceId) {
-    const storedReviews = localStorage.getItem(`reviews_${serviceId}`);
-    return storedReviews ? JSON.parse(storedReviews) : [];
-}
-
-function calculateServiceRating(reviews) {
-    if (reviews.length === 0) return 0;
-    const total = reviews.reduce((sum, review) => sum + review.rating, 0);
-    return total / reviews.length;
-}
-
-function generateStarRatingSmall(rating) {
-    return generateStarRating(rating);
-}
-
 function generateStarRating(rating) {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
