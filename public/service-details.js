@@ -1,3 +1,37 @@
+// Add this at the top of service-details.js
+console.log('🔧 service-details.js loaded');
+console.log('🔧 window.supabaseClient available:', !!window.supabaseClient);
+
+// Enhanced submitReview function with more debugging
+async function submitReview(serviceId) {
+    console.log('🔧 submitReview called with serviceId:', serviceId);
+    
+    if (!window.supabaseClient) {
+        console.error('❌ Supabase client not available in submitReview!');
+        alert('Review system not available. Please try again later.');
+        return;
+    }
+
+    const name = document.getElementById('reviewerName').value.trim();
+    const rating = document.getElementById('reviewRating').value;
+    const comment = document.getElementById('reviewComment').value.trim();
+    
+    console.log('🔧 Form data:', { name, rating, comment });
+    
+    if (!name || !rating || !comment) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    console.log('🔧 Calling supabaseClient.addReview...');
+    const success = await window.supabaseClient.addReview(serviceId, name, rating, comment);
+    console.log('🔧 addReview result:', success);
+    
+    if (success) {
+        document.getElementById('reviewForm').reset();
+        await loadServiceReviews(serviceId); // Reload reviews to show the new one
+    }
+}
 // Service Details Page JavaScript
 let currentService = null;
 let reviews = [];
