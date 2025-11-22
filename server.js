@@ -12,8 +12,20 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize Vercel Postgres client
-const db = createClient();
+// Initialize Vercel Postgres client (only if connection string is available)
+let db = null;
+try {
+  // Check if Postgres environment variables are available
+  if (process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING) {
+    db = createClient();
+    console.log('✅ Vercel Postgres client initialized');
+  } else {
+    console.warn('⚠️ Postgres environment variables not found. Reviews feature will be disabled.');
+  }
+} catch (err) {
+  console.warn('⚠️ Could not initialize Postgres client:', err.message);
+  db = null;
+}
 
 // File paths - handle both local and Vercel
 // On Vercel, process.env.VERCEL is set to "1" (string)
@@ -147,6 +159,10 @@ app.use((err, req, res, next) => {
 
 // Initialize database table for reviews
 async function initReviewsTable() {
+  if (!db) {
+    console.warn('⚠️ Skipping reviews table initialization - Postgres not configured');
+    return;
+  }
   try {
     await db.sql`
       CREATE TABLE IF NOT EXISTS reviews (
@@ -169,6 +185,9 @@ async function initReviewsTable() {
 
 // Get reviews for a service (UPDATED for Vercel Postgres)
 app.get("/api/service/:id/reviews", async (req, res) => {
+  if (!db) {
+    return res.json([]); // Return empty array if Postgres not configured
+  }
   try {
     const result = await db.sql`
       SELECT * FROM reviews 
@@ -184,6 +203,9 @@ app.get("/api/service/:id/reviews", async (req, res) => {
 
 // Add a review (UPDATED for Vercel Postgres)
 app.post("/api/service/:id/reviews", async (req, res) => {
+  if (!db) {
+    return res.status(503).json({ error: "Reviews feature is not available. Postgres not configured." });
+  }
   try {
     const services = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
     const service = services.find((s) => String(s.id) === req.params.id);
@@ -230,18 +252,28 @@ app.get("/api/search", async (req, res) => {
     const services = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
 
     const servicesWithRatings = await Promise.all(services.map(async (service) => {
-      const reviewsResult = await db.sql`
-        SELECT rating FROM reviews WHERE service_id = ${service.id}
-      `;
-      const serviceReviews = reviewsResult.rows;
-      const averageRating = serviceReviews.length > 0
-        ? serviceReviews.reduce((sum, review) => sum + review.rating, 0) / serviceReviews.length
-        : 0;
+      let averageRating = 0;
+      let reviewCount = 0;
+      
+      if (db) {
+        try {
+          const reviewsResult = await db.sql`
+            SELECT rating FROM reviews WHERE service_id = ${service.id}
+          `;
+          const serviceReviews = reviewsResult.rows;
+          reviewCount = serviceReviews.length;
+          averageRating = serviceReviews.length > 0
+            ? serviceReviews.reduce((sum, review) => sum + review.rating, 0) / serviceReviews.length
+            : 0;
+        } catch (err) {
+          console.error(`Error fetching reviews for service ${service.id}:`, err);
+        }
+      }
 
       return {
         ...service,
         averageRating: Math.round(averageRating * 10) / 10,
-        reviewCount: serviceReviews.length,
+        reviewCount: reviewCount,
         isFeatured: service.isPremium || false
       };
     }));
@@ -279,14 +311,22 @@ app.get("/api/service/:id", async (req, res) => {
     const service = services.find((s) => String(s.id) === req.params.id);
     if (!service) return res.status(404).json({ error: "Service not found" });
 
-    const reviewsResult = await db.sql`
-      SELECT * FROM reviews WHERE service_id = ${parseInt(req.params.id)} ORDER BY created_at DESC
-    `;
-
-    const serviceReviews = reviewsResult.rows;
-    const averageRating = serviceReviews.length > 0
-      ? serviceReviews.reduce((sum, review) => sum + review.rating, 0) / serviceReviews.length
-      : 0;
+    let serviceReviews = [];
+    let averageRating = 0;
+    
+    if (db) {
+      try {
+        const reviewsResult = await db.sql`
+          SELECT * FROM reviews WHERE service_id = ${parseInt(req.params.id)} ORDER BY created_at DESC
+        `;
+        serviceReviews = reviewsResult.rows;
+        averageRating = serviceReviews.length > 0
+          ? serviceReviews.reduce((sum, review) => sum + review.rating, 0) / serviceReviews.length
+          : 0;
+      } catch (err) {
+        console.error(`Error fetching reviews for service ${req.params.id}:`, err);
+      }
+    }
 
     res.json({
       ...service,
