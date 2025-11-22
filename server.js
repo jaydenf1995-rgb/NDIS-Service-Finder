@@ -13,17 +13,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // File paths - handle both local and Vercel
-const isVercel = process.env.VERCEL || false;
+// On Vercel, process.env.VERCEL is set to "1" (string)
+const isVercel = process.env.VERCEL === "1" || process.env.VERCEL === "true" || process.env.VERCEL === true;
 const getFilePath = (filename) => {
   if (isVercel) {
     // Ensure /tmp exists on Vercel
     const tmpDir = "/tmp";
-    if (!fs.existsSync(tmpDir)) {
-      try {
+    try {
+      if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir, { recursive: true });
-      } catch (err) {
-        console.warn("Could not create /tmp directory:", err.message);
       }
+    } catch (err) {
+      console.warn("Could not create /tmp directory:", err.message);
     }
     return path.join(tmpDir, filename);
   } else {
@@ -131,6 +132,15 @@ const isEmailConfigured = () => emailTransporter !== null;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
+
+// Global error handler for unhandled errors
+app.use((err, req, res, next) => {
+  console.error("Global error handler caught:", err);
+  console.error("Error stack:", err.stack);
+  if (!res.headersSent) {
+    res.status(500).json({ error: "Internal server error", message: err.message });
+  }
+});
 
 // Initialize database table for reviews
 async function initReviewsTable() {
@@ -462,12 +472,14 @@ const authenticateAdmin = (req, res, next) => {
 
 // Get pending services (admin only)
 app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
+  // Wrap everything in a try-catch to prevent any unhandled errors
   try {
     let pendingServices = [];
     
     // Ensure the directory exists
     try {
       const fileDir = path.dirname(PENDING_FILE);
+      // On Vercel, /tmp should always exist, but check anyway
       if (!fs.existsSync(fileDir)) {
         fs.mkdirSync(fileDir, { recursive: true });
       }
@@ -484,7 +496,7 @@ app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
     } catch (fileError) {
       console.error("Error creating pending.json file:", fileError);
       // Return empty array if we can't create the file
-      return res.json([]);
+      return res.status(200).json([]);
     }
     
     // Read and parse the file
@@ -496,7 +508,11 @@ app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
         if (!Array.isArray(pendingServices)) {
           console.warn("pending.json is not an array, resetting to empty array");
           pendingServices = [];
-          fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
+          try {
+            fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
+          } catch (writeErr) {
+            console.error("Error writing empty array:", writeErr);
+          }
         }
       }
     } catch (parseError) {
@@ -510,11 +526,14 @@ app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
       pendingServices = [];
     }
     
-    res.json(pendingServices);
+    // Always return a valid JSON response
+    return res.status(200).json(pendingServices);
   } catch (err) {
-    console.error("Error reading pending services:", err);
+    // Catch any unexpected errors
+    console.error("Unexpected error in /api/admin/pending:", err);
+    console.error("Error stack:", err.stack);
     // Return empty array instead of error to prevent 500
-    res.status(200).json([]);
+    return res.status(200).json([]);
   }
 });
 
@@ -641,9 +660,13 @@ app.post("/api/admin/reject/:id", authenticateAdmin, async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 // For Vercel deployment, export the app
-if (process.env.VERCEL) {
+// On Vercel, process.env.VERCEL is set to "1" (string)
+const isVercelEnv = process.env.VERCEL === "1" || process.env.VERCEL === "true" || process.env.VERCEL === true;
+if (isVercelEnv) {
   // Initialize database when deployed on Vercel
-  initReviewsTable();
+  initReviewsTable().catch(err => {
+    console.error("Error initializing reviews table on Vercel:", err);
+  });
 }
 
 // For local development, start the server
