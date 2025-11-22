@@ -11,6 +11,7 @@ let currentFilters = {
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('DOM loaded - initializing app...');
     await initializeApp();
+    initializeReviewSystem();
 });
 
 async function initializeApp() {
@@ -36,6 +37,90 @@ async function initializeApp() {
         setupServiceCardClicks();
         updateResultsCount(allServices.length);
     }
+}
+
+// Review System Functions
+function initializeReviewSystem() {
+    loadReviews();
+    
+    const reviewForm = document.getElementById('reviewForm');
+    if (reviewForm) {
+        reviewForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            addReview();
+        });
+    }
+}
+
+function addReview() {
+    const name = document.getElementById('reviewerName').value.trim();
+    const rating = document.getElementById('reviewRating').value;
+    const comment = document.getElementById('reviewComment').value.trim();
+    
+    if (!name || !rating || !comment) {
+        alert('Please fill in all fields');
+        return;
+    }
+    
+    const review = {
+        id: Date.now(),
+        name: name,
+        rating: parseInt(rating),
+        comment: comment,
+        date: new Date().toLocaleDateString('en-AU'),
+        timestamp: new Date().getTime()
+    };
+    
+    // Get existing reviews
+    const existingReviews = JSON.parse(localStorage.getItem('ndisReviews') || '[]');
+    
+    // Add new review
+    existingReviews.unshift(review);
+    
+    // Save back to localStorage (limit to 100 reviews to prevent storage issues)
+    const limitedReviews = existingReviews.slice(0, 100);
+    localStorage.setItem('ndisReviews', JSON.stringify(limitedReviews));
+    
+    // Clear form
+    document.getElementById('reviewForm').reset();
+    
+    // Reload reviews
+    loadReviews();
+    
+    // Show success message
+    alert('Thank you for your review!');
+}
+
+function loadReviews() {
+    const reviewsContainer = document.getElementById('reviewsContainer');
+    if (!reviewsContainer) return;
+    
+    const reviews = JSON.parse(localStorage.getItem('ndisReviews') || '[]');
+    
+    if (reviews.length === 0) {
+        reviewsContainer.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to leave a review!</p>';
+        return;
+    }
+    
+    reviewsContainer.innerHTML = reviews.map(review => `
+        <div class="review-item">
+            <div class="review-header">
+                <strong>${escapeHtml(review.name)}</strong>
+                <div class="review-rating">
+                    ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                    <span class="rating-value">(${review.rating}/5)</span>
+                </div>
+            </div>
+            <div class="review-date">${review.date}</div>
+            <div class="review-comment">${escapeHtml(review.comment)}</div>
+        </div>
+    `).join('');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Load services from JSON file
