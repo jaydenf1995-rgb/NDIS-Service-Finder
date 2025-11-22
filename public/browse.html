@@ -2,32 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Browse NDIS Services - Find Providers by Location & Category | NDIS Service Finder</title>
-    <meta name="description" content="Browse our complete directory of NDIS service providers. Filter by location, service type, support categories, and NDIS registration status. Find support workers, SIL providers, coordinators, and allied health professionals.">
-    <link rel="canonical" href="https://ndiservicefinder.com/browse.html">
-    <link rel="icon" type="image/x-icon" href="/public/favicon.ico">
-    
-    <!-- Social Media - Open Graph -->
-    <meta property="og:title" content="Browse NDIS Services - Find Providers by Location & Category">
-    <meta property="og:description" content="Search our complete NDIS provider directory. Filter by service type, location, and support categories to find the right providers for your needs.">
-    <meta property="og:image" content="https://ndiservicefinder.com/images/og-image.jpg">
-    <meta property="og:url" content="https://ndiservicefinder.com/browse.html">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="NDIS Service Finder">
-    
-    <!-- Social Media - Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Browse NDIS Services">
-    <meta name="twitter:description" content="Search and filter NDIS service providers by location, category, and registration status. Find support workers, coordinators, and allied health professionals.">
-    <meta name="twitter:image" content="https://ndiservicefinder.com/images/og-image.jpg">
-    
-    <!-- Viewport for mobile -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+    <title>Browse All Services - NDIS Service Finder</title>
+    <meta name="description" content="Browse all NDIS service providers. Find support workers, therapists, coordinators and specialist services across Australia.">
     <link rel="stylesheet" href="style.css">
-    <script async src="https://cdn.userway.org/widget.js" data-account="H7KIZiSGe0"></script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4154479797288136"
-     crossorigin="anonymous"></script>
 </head>
 <body>
     <header>
@@ -50,12 +27,12 @@
     </header>
 
     <main class="container">
-        <section class="browse-header">
-            <h1>Browse All Services</h1>
-            <p>Explore our complete directory of NDIS service providers</p>
-        </section>
+        <div class="welcome-blurb">
+            <h2>Browse All NDIS Services</h2>
+            <p>Find the perfect NDIS service provider for your needs. Browse our complete directory of verified providers across Australia.</p>
+        </div>
 
-        <!-- Search and Filters -->
+        <!-- Search and Filters Section -->
         <div class="search-section">
             <input type="text" id="searchBox" placeholder="Search services by name, location, or description...">
             
@@ -67,14 +44,14 @@
                 <div class="filter-group">
                     <label>Service Categories:</label>
                     <div class="checkbox-grid">
-                        <label><input type="checkbox" name="category" value="SIL Provider"> SIL Provider</label>
+                        <label><input type="checkbox" name="category" value="Day Programs"> Day Programs</label>
                         <label><input type="checkbox" name="category" value="Support Worker"> Support Worker</label>
-                        <label><input type="checkbox" name="category" value="Support Coordinator"> Support Coordinator</label>
-                        <label><input type="checkbox" name="category" value="Allied Health Professional"> Allied Health</label>
-                        <label><input type="checkbox" name="category" value="Occupational Therapist"> OT</label>
-                        <label><input type="checkbox" name="category" value="Physiotherapist"> Physio</label>
-                        <label><input type="checkbox" name="category" value="Offers Day Programs"> Day Programs</label>
-                        <label><input type="checkbox" name="category" value="Independent Worker"> Independent Worker</label>
+                        <label><input type="checkbox" name="category" value="SIL Provider"> SIL Provider</label>
+                        <label><input type="checkbox" name="category" value="Support Coordination"> Support Coordination</label>
+                        <label><input type="checkbox" name="category" value="Occupational Therapy"> Occupational Therapy</label>
+                        <label><input type="checkbox" name="category" value="Physiotherapist"> Physiotherapist</label>
+                        <label><input type="checkbox" name="category" value="Plan Management"> Plan Management</label>
+                        <label><input type="checkbox" name="category" value="Behavioural Specialist"> Behavioural Specialist</label>
                         <label><input type="checkbox" name="category" value="Respite"> Respite</label>
                     </div>
                 </div>
@@ -111,11 +88,12 @@
             <button class="chip active" data-category="">All Services</button>
             <button class="chip" data-category="Support Worker">Support Workers</button>
             <button class="chip" data-category="SIL Provider">SIL Providers</button>
-            <button class="chip" data-category="Support Coordinator">Coordinators</button>
-            <button class="chip" data-category="Allied Health Professional">Allied Health</button>
-            <button class="chip" data-category="Occupational Therapist">OT</button>
-            <button class="chip" data-category="Physiotherapist">Physio</button>
-            <button class="chip" data-category="Offers Day Programs">Day Programs</button>
+            <button class="chip" data-category="Support Coordination">Support Coordination</button>
+            <button class="chip" data-category="Day Programs">Day Programs</button>
+            <button class="chip" data-category="Occupational Therapy">Occupational Therapy</button>
+            <button class="chip" data-category="Physiotherapist">Physiotherapist</button>
+            <button class="chip" data-category="Plan Management">Plan Management</button>
+            <button class="chip" data-category="Behavioural Specialist">Behavioural Specialist</button>
             <button class="chip" data-category="Respite">Respite</button>
         </div>
 
@@ -129,23 +107,24 @@
             </div>
         </div>
 
-        <!-- Services Grid -->
+        <!-- All Services Grid -->
         <section class="featured-services">
             <ul id="serviceList" class="service-grid"></ul>
-            <p id="noResults" style="display:none; text-align: center; color: #666; padding: 20px;">
-                No services found. Try adjusting your search filters.
+            <p id="noResults" style="display:none; text-align: center; color: #666; padding: 40px 20px;">
+                No services found matching your criteria. <a href="https://forms.gle/k52cthQPL88q7uDY8" target="_blank">Add your service</a> to be the first!
             </p>
         </section>
     </main>
 
-<footer>
-    <div class="container">
-        <p>&copy; 2025 NDIS Service Finder. All rights reserved. | <a href="privacy.html">Privacy Policy</a></p>
-    </div>
-</footer>
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 NDIS Service Finder. All rights reserved. | <a href="privacy.html">Privacy Policy</a></p>
+        </div>
+    </footer>
 
+    <!-- Scripts in correct order -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-
-
