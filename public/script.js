@@ -12,7 +12,22 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('DOM loaded - initializing app...');
     await initializeApp();
 });
+// TEMPORARY DEBUG - Add this right after your DOMContentLoaded event
+console.log('🔄 Starting service card debug...');
 
+// Test clicking on any element
+document.addEventListener('click', function(e) {
+    console.log('🎯 Click detected on:', e.target);
+    console.log('🎯 Closest service-card:', e.target.closest('.service-card'));
+});
+
+// Check the service arrays
+setTimeout(() => {
+    console.log('📊 All services:', allServices);
+    console.log('📊 Filtered services:', filteredServices);
+    console.log('🎯 Service cards on page:', document.querySelectorAll('.service-card').length);
+}, 3000);
+// delete lines 15 - 30 after debug
 async function initializeApp() {
     try {
         console.log('Loading services...');
@@ -533,4 +548,5 @@ setTimeout(checkSupabaseStatus, 1000);
 
 // Also check when window loads
 window.addEventListener('load', checkSupabaseStatus);
+
 
