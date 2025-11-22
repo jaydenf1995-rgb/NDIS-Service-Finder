@@ -425,13 +425,31 @@ const authenticateAdmin = (req, res, next) => {
 app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
   try {
     let pendingServices = [];
-    if (fs.existsSync(PENDING_FILE)) {
-      pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
+    
+    // Ensure the file exists first
+    if (!fs.existsSync(PENDING_FILE)) {
+      // Create empty file if it doesn't exist
+      fs.writeFileSync(PENDING_FILE, "[]");
     }
+    
+    // Read and parse the file
+    try {
+      const fileContent = fs.readFileSync(PENDING_FILE, "utf-8");
+      if (fileContent.trim()) {
+        pendingServices = JSON.parse(fileContent);
+      }
+    } catch (parseError) {
+      console.error("Error parsing pending.json:", parseError);
+      // If file is corrupted, reset it to empty array
+      fs.writeFileSync(PENDING_FILE, "[]");
+      pendingServices = [];
+    }
+    
     res.json(pendingServices);
   } catch (err) {
     console.error("Error reading pending services:", err);
-    res.status(500).json({ error: "Failed to read pending services." });
+    // Return empty array instead of error to prevent 500
+    res.json([]);
   }
 });
 
@@ -576,3 +594,4 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
 }
 
 export default app;
+
