@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Service Approvals</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .login-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 400px;
+            margin: 50px auto;
+        }
+        .admin-panel {
+            display: none;
+        }
+        .admin-panel.active {
+            display: block;
+        }
+        .pending-service {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #ffc107;
+        }
+        .pending-service h3 {
+            color: var(--color-4);
+            margin-bottom: 15px;
+        }
+        .service-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .service-detail-item {
+            padding: 10px;
+            background: var(--color-3);
+            border-radius: 6px;
+        }
+        .service-detail-item strong {
+            color: var(--color-4);
+            display: block;
+            margin-bottom: 5px;
+        }
+        .service-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn-approve {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-approve:hover {
+            background: #218838;
+        }
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-reject:hover {
+            background: #c82333;
+        }
+        .rejection-reason {
+            margin-top: 10px;
+            display: none;
+        }
+        .rejection-reason.active {
+            display: block;
+        }
+        .rejection-reason textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--color-1);
+            border-radius: 6px;
+            margin-top: 5px;
+        }
+        .no-pending {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            color: #666;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        .service-photo {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1>NDIS Service Finder - Admin Panel</h1>
+                <p class="slogan">Service Approval System</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="admin-container">
+        <!-- Login Section -->
+        <div id="loginSection" class="login-section">
+            <h2>Admin Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="adminPassword">Admin Password</label>
+                    <input type="password" id="adminPassword" name="password" required autocomplete="off">
+                </div>
+                <div id="loginMessage" class="form-message" style="display: none;"></div>
+                <button type="submit" class="primary-btn">Login</button>
+            </form>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="admin-panel">
+            <div class="admin-header">
+                <h2>Pending Service Approvals</h2>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+
+            <div id="pendingServicesList"></div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 NDIS Service Finder. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Check if already logged in
+        if (localStorage.getItem('adminAuthenticated') === 'true') {
+            showAdminPanel();
+        }
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const password = document.getElementById('adminPassword').value;
+            const loginMessage = document.getElementById('loginMessage');
+            
+            try {
+                const response = await fetch(`/api/admin/pending?password=${encodeURIComponent(password)}`);
+                
+                if (response.ok) {
+                    localStorage.setItem('adminAuthenticated', 'true');
+                    localStorage.setItem('adminPassword', password);
+                    showAdminPanel();
+                    loadPendingServices();
+                } else {
+                    loginMessage.textContent = 'Invalid password. Access denied.';
+                    loginMessage.className = 'form-message error';
+                    loginMessage.style.display = 'block';
+                }
+            } catch (error) {
+                loginMessage.textContent = 'Error connecting to server. Please try again.';
+                loginMessage.className = 'form-message error';
+                loginMessage.style.display = 'block';
+            }
+        });
+
+        function showAdminPanel() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('adminPanel').classList.add('active');
+            loadPendingServices();
+        }
+
+        function logout() {
+            localStorage.removeItem('adminAuthenticated');
+            localStorage.removeItem('adminPassword');
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('adminPanel').classList.remove('active');
+            document.getElementById('adminPassword').value = '';
+        }
+
+        async function loadPendingServices() {
+            const password = localStorage.getItem('adminPassword');
+            if (!password) {
+                logout();
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/admin/pending?password=${encodeURIComponent(password)}`);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        logout();
+                        return;
+                    }
+                    throw new Error('Failed to load pending services');
+                }
+
+                const services = await response.json();
+                displayPendingServices(services);
+            } catch (error) {
+                console.error('Error loading pending services:', error);
+                document.getElementById('pendingServicesList').innerHTML = 
+                    '<div class="no-pending">Error loading pending services. Please refresh the page.</div>';
+            }
+        }
+
+        function displayPendingServices(services) {
+            const container = document.getElementById('pendingServicesList');
+            
+            if (services.length === 0) {
+                container.innerHTML = '<div class="no-pending">No pending services to review. All caught up! 🎉</div>';
+                return;
+            }
+
+            container.innerHTML = services.map(service => `
+                <div class="pending-service" data-service-id="${service.id}">
+                    <h3>${service.name}</h3>
+                    <div class="service-details">
+                        <div class="service-detail-item">
+                            <strong>Email:</strong>
+                            <a href="mailto:${service.email}">${service.email}</a>
+                        </div>
+                        <div class="service-detail-item">
+                            <strong>Phone:</strong>
+                            <a href="tel:${service.phone}">${service.phone}</a>
+                        </div>
+                        <div class="service-detail-item">
+                            <strong>Location:</strong>
+                            ${service.location}
+                        </div>
+                        <div class="service-detail-item">
+                            <strong>Address:</strong>
+                            ${service.address}
+                        </div>
+                        <div class="service-detail-item">
+                            <strong>Services:</strong>
+                            ${service.services.join(', ')}
+                        </div>
+                        <div class="service-detail-item">
+                            <strong>NDIS Registered:</strong>
+                            ${service.registered}
+                        </div>
+                        <div class="service-detail-item" style="grid-column: 1 / -1;">
+                            <strong>Description:</strong>
+                            ${service.description}
+                        </div>
+                        ${service.aboutMe ? `
+                        <div class="service-detail-item" style="grid-column: 1 / -1;">
+                            <strong>About:</strong>
+                            ${service.aboutMe}
+                        </div>
+                        ` : ''}
+                        ${service.photo ? `
+                        <div class="service-detail-item" style="grid-column: 1 / -1;">
+                            <strong>Photo:</strong>
+                            <img src="${service.photo}" alt="${service.name}" class="service-photo" onerror="this.style.display='none'">
+                        </div>
+                        ` : ''}
+                        <div class="service-detail-item">
+                            <strong>Submitted:</strong>
+                            ${new Date(service.dateAdded).toLocaleDateString()}
+                        </div>
+                    </div>
+                    <div class="rejection-reason" id="reject-${service.id}">
+                        <label>Rejection Reason (optional):</label>
+                        <textarea id="reason-${service.id}" rows="3" placeholder="Optional reason for rejection..."></textarea>
+                    </div>
+                    <div class="service-actions">
+                        <button class="btn-approve" onclick="approveService(${service.id})">✓ Approve</button>
+                        <button class="btn-reject" onclick="showRejectionReason(${service.id})">✗ Reject</button>
+                        <button class="btn-reject" id="confirm-reject-${service.id}" style="display: none;" onclick="rejectService(${service.id})">Confirm Rejection</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showRejectionReason(serviceId) {
+            const reasonDiv = document.getElementById(`reject-${serviceId}`);
+            const confirmBtn = document.getElementById(`confirm-reject-${serviceId}`);
+            reasonDiv.classList.add('active');
+            confirmBtn.style.display = 'inline-block';
+        }
+
+        async function approveService(serviceId) {
+            if (!confirm('Are you sure you want to approve this service? It will go live immediately.')) {
+                return;
+            }
+
+            const password = localStorage.getItem('adminPassword');
+            const serviceElement = document.querySelector(`[data-service-id="${serviceId}"]`);
+            
+            try {
+                const response = await fetch(`/api/admin/approve/${serviceId}?password=${encodeURIComponent(password)}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        logout();
+                        return;
+                    }
+                    throw new Error('Failed to approve service');
+                }
+
+                serviceElement.style.opacity = '0.5';
+                serviceElement.style.pointerEvents = 'none';
+                serviceElement.querySelector('.service-actions').innerHTML = '<strong style="color: #28a745;">✓ Approved</strong>';
+                
+                // Reload list after a moment
+                setTimeout(() => {
+                    loadPendingServices();
+                }, 1000);
+            } catch (error) {
+                alert('Error approving service: ' + error.message);
+            }
+        }
+
+        async function rejectService(serviceId) {
+            if (!confirm('Are you sure you want to reject this service? This action cannot be undone.')) {
+                return;
+            }
+
+            const password = localStorage.getItem('adminPassword');
+            const reason = document.getElementById(`reason-${serviceId}`).value;
+            const serviceElement = document.querySelector(`[data-service-id="${serviceId}"]`);
+            
+            try {
+                const response = await fetch(`/api/admin/reject/${serviceId}?password=${encodeURIComponent(password)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason })
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        logout();
+                        return;
+                    }
+                    throw new Error('Failed to reject service');
+                }
+
+                serviceElement.style.opacity = '0.5';
+                serviceElement.style.pointerEvents = 'none';
+                serviceElement.querySelector('.service-actions').innerHTML = '<strong style="color: #dc3545;">✗ Rejected</strong>';
+                
+                // Reload list after a moment
+                setTimeout(() => {
+                    loadPendingServices();
+                }, 1000);
+            } catch (error) {
+                alert('Error rejecting service: ' + error.message);
+            }
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (localStorage.getItem('adminAuthenticated') === 'true') {
+                loadPendingServices();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
+

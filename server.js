@@ -3,20 +3,58 @@ dotenv.config();
 import express from "express";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 import multer from "multer";
 import nodemailer from "nodemailer";
 import { db } from '@vercel/postgres';
 
 const app = express();
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// File paths
-const SERVICES_FILE = path.join("/tmp", "services.json");
-const PENDING_FILE = path.join("/tmp", "pending.json");
-const REVIEWS_FILE = path.join("/tmp", "reviews.json");
-const SUBSCRIBERS_FILE = path.join("/tmp", "subscribers.json");
-const PREMIUM_FILE = path.join("/tmp", "premium-subscriptions.json");
-const USERS_FILE = path.join("/tmp", "users.json");
+// File paths - handle both local and Vercel
+const isVercel = process.env.VERCEL || false;
+const getFilePath = (filename) => {
+  if (isVercel) {
+    return path.join("/tmp", filename);
+  } else {
+    // For local development, use project root
+    return path.join(__dirname, filename);
+  }
+};
+
+const SERVICES_FILE = getFilePath("services.json");
+const PENDING_FILE = getFilePath("pending.json");
+const REVIEWS_FILE = getFilePath("reviews.json");
+const SUBSCRIBERS_FILE = getFilePath("subscribers.json");
+const PREMIUM_FILE = getFilePath("premium-subscriptions.json");
+const USERS_FILE = getFilePath("users.json");
+
+// For local dev, also sync with public/services.json on startup
+if (!isVercel) {
+  const publicServicesPath = path.join(__dirname, "public", "services.json");
+  if (fs.existsSync(publicServicesPath)) {
+    try {
+      const publicServices = fs.readFileSync(publicServicesPath, "utf-8");
+      fs.writeFileSync(SERVICES_FILE, publicServices);
+      console.log("✅ Synced services.json from public folder");
+    } catch (err) {
+      console.warn("⚠️ Could not sync services.json:", err.message);
+    }
+  }
+  
+  // Also sync pending.json if it exists in root
+  const rootPendingPath = path.join(__dirname, "pending.json");
+  if (fs.existsSync(rootPendingPath)) {
+    try {
+      const rootPending = fs.readFileSync(rootPendingPath, "utf-8");
+      fs.writeFileSync(PENDING_FILE, rootPending);
+      console.log("✅ Synced pending.json from root folder");
+    } catch (err) {
+      console.warn("⚠️ Could not sync pending.json:", err.message);
+    }
+  }
+}
 
 // Ensure JSON files exist in /tmp (writable directory on Vercel)
 const ensureFilesExist = () => {
@@ -129,6 +167,22 @@ app.post("/api/service/:id/reviews", async (req, res) => {
   }
 });
 
+// Serve services.json (for frontend compatibility)
+app.get("/services.json", (req, res) => {
+  try {
+    if (fs.existsSync(SERVICES_FILE)) {
+      const services = fs.readFileSync(SERVICES_FILE, "utf-8");
+      res.setHeader('Content-Type', 'application/json');
+      res.send(services);
+    } else {
+      res.json([]);
+    }
+  } catch (err) {
+    console.error("Error serving services.json:", err);
+    res.status(500).json({ error: "Failed to read services." });
+  }
+});
+
 // Search approved services (UPDATED to include Postgres reviews)
 app.get("/api/search", async (req, res) => {
   try {
@@ -214,11 +268,119 @@ app.get("/api/service/:id", async (req, res) => {
 // KEEP ALL YOUR OTHER EXISTING ROUTES EXACTLY AS THEY ARE
 // (The file-based routes for services, users, etc. will continue to work)
 
-// Add new service (to pending.json) - WITH USER LINKING
-app.post("/api/add", upload.single("photo"), (req, res) => {
+// Add new service (to pending.json)
+app.post("/api/add", upload.single("photo"), async (req, res) => {
   try {
-    // ... keep your existing add service code exactly as is ...
-    // This will continue to use file-based storage
+    const { name, email, phone, location, address, services, registered, description, aboutMe } = req.body;
+    
+    // Validate required fields
+    if (!name || !email || !phone || !location || !address || !registered || !description) {
+      return res.status(400).json({
+        success: false,
+        error: "Please fill in all required fields."
+      });
+    }
+
+    // Parse services array (can be single value or array from form)
+    let servicesArray = [];
+    if (Array.isArray(services)) {
+      servicesArray = services;
+    } else if (services) {
+      servicesArray = [services];
+    }
+
+    if (servicesArray.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Please select at least one service type."
+      });
+    }
+
+    // Handle photo upload
+    let photoPath = "";
+    if (req.file) {
+      const timestamp = Date.now();
+      const ext = path.extname(req.file.originalname) || ".jpg";
+      const filename = `${timestamp}-${Math.floor(Math.random() * 1000000)}${ext}`;
+      
+      if (isVercel) {
+        // On Vercel, save to /tmp/uploads
+        const uploadDir = path.join("/tmp", "uploads");
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        const filePath = path.join(uploadDir, filename);
+        fs.writeFileSync(filePath, req.file.buffer);
+        photoPath = `/uploads/${filename}`;
+      } else {
+        // Local development - save to public/uploads
+        const uploadDir = path.join(__dirname, "public", "uploads");
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        const filePath = path.join(uploadDir, filename);
+        fs.writeFileSync(filePath, req.file.buffer);
+        photoPath = `uploads/${filename}`;
+      }
+    }
+
+    // Read existing pending services
+    let pendingServices = [];
+    if (fs.existsSync(PENDING_FILE)) {
+      try {
+        pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
+      } catch (err) {
+        console.warn("Could not read pending.json, starting fresh:", err.message);
+        pendingServices = [];
+      }
+    }
+
+    // Create new pending service
+    const newService = {
+      id: Date.now(),
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      location: location.trim(),
+      address: address.trim(),
+      services: servicesArray,
+      registered: registered,
+      description: description.trim(),
+      aboutMe: aboutMe ? aboutMe.trim() : "",
+      photo: photoPath,
+      dateAdded: new Date().toISOString(),
+      status: "pending"
+    };
+
+    pendingServices.push(newService);
+
+    // Save to pending.json
+    fs.writeFileSync(PENDING_FILE, JSON.stringify(pendingServices, null, 2));
+
+    // Send email notification to admin if configured
+    if (isEmailConfigured() && process.env.ADMIN_EMAIL) {
+      try {
+        await emailTransporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: process.env.ADMIN_EMAIL,
+          subject: `New Service Submission: ${name}`,
+          html: `
+            <h2>New Service Submission</h2>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Phone:</strong> ${phone}</p>
+            <p><strong>Location:</strong> ${location}</p>
+            <p><strong>Services:</strong> ${servicesArray.join(", ")}</p>
+            <p><strong>NDIS Registered:</strong> ${registered}</p>
+            <p><strong>Description:</strong> ${description}</p>
+            <p>Please review and approve this service in the admin panel.</p>
+          `
+        });
+      } catch (emailErr) {
+        console.warn("Failed to send email notification:", emailErr.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: "Service submitted successfully. It will be reviewed before going live."
+    });
   } catch (err) {
     console.error("Error submitting service:", err);
     res.status(500).json({
@@ -245,6 +407,148 @@ app.post("/api/login", (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Failed to login: " + err.message });
+  }
+});
+
+// Admin authentication middleware
+const authenticateAdmin = (req, res, next) => {
+  const adminPassword = req.headers.authorization || req.body.password || req.query.password;
+  const expectedPassword = process.env.ADMIN_PASSWORD || "admin123"; // Default password, should be set in env
+  
+  if (!adminPassword || adminPassword !== expectedPassword) {
+    return res.status(401).json({ error: "Unauthorized. Admin access required." });
+  }
+  next();
+};
+
+// Get pending services (admin only)
+app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
+  try {
+    let pendingServices = [];
+    if (fs.existsSync(PENDING_FILE)) {
+      pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
+    }
+    res.json(pendingServices);
+  } catch (err) {
+    console.error("Error reading pending services:", err);
+    res.status(500).json({ error: "Failed to read pending services." });
+  }
+});
+
+// Approve service (admin only)
+app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
+  try {
+    // Read pending services
+    let pendingServices = [];
+    if (fs.existsSync(PENDING_FILE)) {
+      pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
+    }
+
+    // Find the service to approve
+    const serviceIndex = pendingServices.findIndex(s => String(s.id) === String(req.params.id));
+    if (serviceIndex === -1) {
+      return res.status(404).json({ error: "Service not found in pending list." });
+    }
+
+    const service = pendingServices[serviceIndex];
+    
+    // Read approved services
+    let approvedServices = [];
+    if (fs.existsSync(SERVICES_FILE)) {
+      approvedServices = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
+    }
+
+    // Add to approved services
+    delete service.status; // Remove pending status
+    approvedServices.push(service);
+
+    // Save approved services
+    fs.writeFileSync(SERVICES_FILE, JSON.stringify(approvedServices, null, 2));
+
+    // Remove from pending
+    pendingServices.splice(serviceIndex, 1);
+    fs.writeFileSync(PENDING_FILE, JSON.stringify(pendingServices, null, 2));
+
+    // Sync to public/services.json for both local dev and Vercel (for static file serving)
+    const publicServicesPath = path.join(__dirname, "public", "services.json");
+    try {
+      fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
+    } catch (err) {
+      console.warn("Could not sync to public/services.json:", err.message);
+    }
+
+    // Send approval email if configured
+    if (isEmailConfigured() && service.email) {
+      try {
+        await emailTransporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: service.email,
+          subject: "Your Service Has Been Approved - NDIS Service Finder",
+          html: `
+            <h2>Service Approved!</h2>
+            <p>Great news! Your service "<strong>${service.name}</strong>" has been approved and is now live on NDIS Service Finder.</p>
+            <p>You can view it at: <a href="${process.env.SITE_URL || 'https://ndiservicefinder.com'}/service-details.html?id=${service.id}">View Your Service</a></p>
+            <p>Thank you for being part of our platform!</p>
+          `
+        });
+      } catch (emailErr) {
+        console.warn("Failed to send approval email:", emailErr.message);
+      }
+    }
+
+    res.json({ success: true, message: "Service approved and added to live listings." });
+  } catch (err) {
+    console.error("Error approving service:", err);
+    res.status(500).json({ error: "Failed to approve service: " + err.message });
+  }
+});
+
+// Reject service (admin only)
+app.post("/api/admin/reject/:id", authenticateAdmin, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    
+    // Read pending services
+    let pendingServices = [];
+    if (fs.existsSync(PENDING_FILE)) {
+      pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
+    }
+
+    // Find the service to reject
+    const serviceIndex = pendingServices.findIndex(s => String(s.id) === String(req.params.id));
+    if (serviceIndex === -1) {
+      return res.status(404).json({ error: "Service not found in pending list." });
+    }
+
+    const service = pendingServices[serviceIndex];
+
+    // Remove from pending
+    pendingServices.splice(serviceIndex, 1);
+    fs.writeFileSync(PENDING_FILE, JSON.stringify(pendingServices, null, 2));
+
+    // Send rejection email if configured
+    if (isEmailConfigured() && service.email) {
+      try {
+        await emailTransporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: service.email,
+          subject: "Service Submission Update - NDIS Service Finder",
+          html: `
+            <h2>Service Submission Update</h2>
+            <p>Thank you for submitting your service "<strong>${service.name}</strong>" to NDIS Service Finder.</p>
+            ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+            <p>Unfortunately, we are unable to approve your service at this time. If you have questions, please feel free to contact us.</p>
+          `
+        });
+      } catch (emailErr) {
+        console.warn("Failed to send rejection email:", emailErr.message);
+      }
+    }
+
+    res.json({ success: true, message: "Service rejected and removed from pending list." });
+  } catch (err) {
+    console.error("Error rejecting service:", err);
+    res.status(500).json({ error: "Failed to reject service: " + err.message });
   }
 });
 
