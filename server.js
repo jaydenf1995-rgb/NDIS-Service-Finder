@@ -16,7 +16,16 @@ const __dirname = path.dirname(__filename);
 const isVercel = process.env.VERCEL || false;
 const getFilePath = (filename) => {
   if (isVercel) {
-    return path.join("/tmp", filename);
+    // Ensure /tmp exists on Vercel
+    const tmpDir = "/tmp";
+    if (!fs.existsSync(tmpDir)) {
+      try {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      } catch (err) {
+        console.warn("Could not create /tmp directory:", err.message);
+      }
+    }
+    return path.join(tmpDir, filename);
   } else {
     // For local development, use project root
     return path.join(__dirname, filename);
@@ -58,12 +67,37 @@ if (!isVercel) {
 
 // Ensure JSON files exist in /tmp (writable directory on Vercel)
 const ensureFilesExist = () => {
-  if (!fs.existsSync(SERVICES_FILE)) fs.writeFileSync(SERVICES_FILE, "[]");
-  if (!fs.existsSync(PENDING_FILE)) fs.writeFileSync(PENDING_FILE, "[]");
-  if (!fs.existsSync(REVIEWS_FILE)) fs.writeFileSync(REVIEWS_FILE, "[]");
-  if (!fs.existsSync(SUBSCRIBERS_FILE)) fs.writeFileSync(SUBSCRIBERS_FILE, "[]");
-  if (!fs.existsSync(PREMIUM_FILE)) fs.writeFileSync(PREMIUM_FILE, "[]");
-  if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, "[]");
+  try {
+    // Ensure /tmp directory exists
+    if (isVercel) {
+      const tmpDir = "/tmp";
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
+    }
+    
+    // Create files if they don't exist
+    const files = [
+      SERVICES_FILE,
+      PENDING_FILE,
+      REVIEWS_FILE,
+      SUBSCRIBERS_FILE,
+      PREMIUM_FILE,
+      USERS_FILE
+    ];
+    
+    files.forEach(file => {
+      try {
+        if (!fs.existsSync(file)) {
+          fs.writeFileSync(file, "[]", "utf-8");
+        }
+      } catch (err) {
+        console.warn(`Could not create ${file}:`, err.message);
+      }
+    });
+  } catch (err) {
+    console.warn("Error ensuring files exist:", err.message);
+  }
 };
 
 ensureFilesExist();
@@ -426,22 +460,27 @@ app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
   try {
     let pendingServices = [];
     
-    // Ensure the file exists first
+    // Ensure the directory exists
+    const fileDir = path.dirname(PENDING_FILE);
+    if (!fs.existsSync(fileDir)) {
+      fs.mkdirSync(fileDir, { recursive: true });
+    }
+    
+    // Ensure the file exists
     if (!fs.existsSync(PENDING_FILE)) {
-      // Create empty file if it doesn't exist
-      fs.writeFileSync(PENDING_FILE, "[]");
+      fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
     }
     
     // Read and parse the file
     try {
       const fileContent = fs.readFileSync(PENDING_FILE, "utf-8");
-      if (fileContent.trim()) {
+      if (fileContent && fileContent.trim()) {
         pendingServices = JSON.parse(fileContent);
       }
     } catch (parseError) {
       console.error("Error parsing pending.json:", parseError);
-      // If file is corrupted, reset it to empty array
-      fs.writeFileSync(PENDING_FILE, "[]");
+      // If file is corrupted, reset it
+      fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
       pendingServices = [];
     }
     
@@ -594,4 +633,5 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
 }
 
 export default app;
+
 
