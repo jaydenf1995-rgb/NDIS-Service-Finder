@@ -11,8 +11,9 @@
   "keywords": ["ndis", "disability", "services", "finder"],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
+    "@vercel/postgres": "^0.5.1",
     "express": "^5.1.0",
     "multer": "^2.0.2",
     "nodemailer": "^6.9.15",
