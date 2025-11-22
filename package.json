@@ -11,11 +11,12 @@
   "keywords": ["ndis", "disability", "services", "finder"],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "express": "^5.1.0",
     "multer": "^2.0.2",
     "nodemailer": "^6.9.15",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "@vercel/postgres": "^0.4.0"
   }
 }
