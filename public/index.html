@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="style.css">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4154479797288136"
      crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- REMOVE the Supabase script from here - it should be in the body -->
 </head>
 <body>
     <!-- Skip to main content link -->
@@ -182,22 +182,9 @@
     </div>
 </footer>
 
+    <!-- CORRECT SCRIPT ORDER - Remove duplicates and fix order -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
     <script src="script.js"></script>
-    <!-- Add these right before your closing </body> tag -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script src="script.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
