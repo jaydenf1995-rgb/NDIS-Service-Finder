@@ -99,8 +99,6 @@ window.supabaseClient = {
     getServiceAverageRating
 };
 
-console.log('Supabase client initialized');
-// Enhanced debugging for supabase.js
 console.log('✅ supabase.js loaded successfully');
 console.log('✅ Supabase URL:', SUPABASE_URL);
 console.log('✅ Supabase client initialized:', !!supabase);
