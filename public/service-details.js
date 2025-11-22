@@ -121,26 +121,39 @@ function displayServiceDetails(service) {
                     </div>
                 </div>
 
-                <!-- Review Form -->
-                <div class="review-form">
-                    <h3>Leave a Review</h3>
-                    <form id="reviewForm">
-                        <div class="form-group">
-                            <label for="reviewerName">Your Name:</label>
-                            <input type="text" id="reviewerName" required placeholder="Enter your name">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="reviewRating">Rating:</label>
-                            <select id="reviewRating" required>
-                                <option value="">Select Rating</option>
-                                <option value="5">5 Stars - Excellent</option>
-                                <option value="4">4 Stars - Very Good</option>
-                                <option value="3">3 Stars - Good</option>
-                                <option value="2">2 Stars - Fair</option>
-                                <option value="1">1 Star - Poor</option>
-                            </select>
-                        </div>
+<!-- Review Form -->
+<div class="review-form">
+    <h3>Leave a Review</h3>
+    <form id="reviewForm">
+        <div class="form-group">
+            <label for="reviewerName">Your Name (optional):</label>
+            <input type="text" id="reviewerName" placeholder="Anonymous">
+        </div>
+        
+        <div class="form-group">
+            <label>Rating: <span id="selectedRatingText">(Select stars)</span></label>
+            <div class="star-rating">
+                <input type="radio" id="star5" name="rating" value="5">
+                <label for="star5" title="5 stars">★</label>
+                <input type="radio" id="star4" name="rating" value="4">
+                <label for="star4" title="4 stars">★</label>
+                <input type="radio" id="star3" name="rating" value="3">
+                <label for="star3" title="3 stars">★</label>
+                <input type="radio" id="star2" name="rating" value="2">
+                <label for="star2" title="2 stars">★</label>
+                <input type="radio" id="star1" name="rating" value="1">
+                <label for="star1" title="1 star">★</label>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="reviewComment">Your Review:</label>
+            <textarea id="reviewComment" required placeholder="Share your experience with this service..."></textarea>
+        </div>
+        
+        <button type="submit" class="submit-btn">Submit Review</button>
+    </form>
+</div>
                         
                         <div class="form-group">
                             <label for="reviewComment">Your Review:</label>
