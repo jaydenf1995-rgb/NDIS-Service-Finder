@@ -216,5 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const serviceId = urlParams.get('id');
     
+    console.log('🚀 Initializing review system for service:', serviceId);
     window.reviewSystem = new VercelReviewSystem(serviceId);
 });
