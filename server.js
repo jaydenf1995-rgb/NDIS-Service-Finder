@@ -446,13 +446,18 @@ app.post("/api/login", (req, res) => {
 
 // Admin authentication middleware
 const authenticateAdmin = (req, res, next) => {
-  const adminPassword = req.headers.authorization || req.body.password || req.query.password;
-  const expectedPassword = process.env.ADMIN_PASSWORD || "admin123"; // Default password, should be set in env
-  
-  if (!adminPassword || adminPassword !== expectedPassword) {
-    return res.status(401).json({ error: "Unauthorized. Admin access required." });
+  try {
+    const adminPassword = req.headers.authorization || req.body.password || req.query.password;
+    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123"; // Default password, should be set in env
+    
+    if (!adminPassword || adminPassword !== expectedPassword) {
+      return res.status(401).json({ error: "Unauthorized. Admin access required." });
+    }
+    next();
+  } catch (err) {
+    console.error("Error in authenticateAdmin middleware:", err);
+    return res.status(500).json({ error: "Authentication error: " + err.message });
   }
-  next();
 };
 
 // Get pending services (admin only)
@@ -461,14 +466,25 @@ app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
     let pendingServices = [];
     
     // Ensure the directory exists
-    const fileDir = path.dirname(PENDING_FILE);
-    if (!fs.existsSync(fileDir)) {
-      fs.mkdirSync(fileDir, { recursive: true });
+    try {
+      const fileDir = path.dirname(PENDING_FILE);
+      if (!fs.existsSync(fileDir)) {
+        fs.mkdirSync(fileDir, { recursive: true });
+      }
+    } catch (dirError) {
+      console.error("Error creating directory:", dirError);
+      // Continue anyway, might work if directory already exists
     }
     
     // Ensure the file exists
-    if (!fs.existsSync(PENDING_FILE)) {
-      fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
+    try {
+      if (!fs.existsSync(PENDING_FILE)) {
+        fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
+      }
+    } catch (fileError) {
+      console.error("Error creating pending.json file:", fileError);
+      // Return empty array if we can't create the file
+      return res.json([]);
     }
     
     // Read and parse the file
@@ -476,11 +492,21 @@ app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
       const fileContent = fs.readFileSync(PENDING_FILE, "utf-8");
       if (fileContent && fileContent.trim()) {
         pendingServices = JSON.parse(fileContent);
+        // Ensure it's an array
+        if (!Array.isArray(pendingServices)) {
+          console.warn("pending.json is not an array, resetting to empty array");
+          pendingServices = [];
+          fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
+        }
       }
     } catch (parseError) {
       console.error("Error parsing pending.json:", parseError);
       // If file is corrupted, reset it
-      fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
+      try {
+        fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
+      } catch (writeError) {
+        console.error("Error resetting pending.json:", writeError);
+      }
       pendingServices = [];
     }
     
@@ -488,7 +514,7 @@ app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
   } catch (err) {
     console.error("Error reading pending services:", err);
     // Return empty array instead of error to prevent 500
-    res.json([]);
+    res.status(200).json([]);
   }
 });
 
