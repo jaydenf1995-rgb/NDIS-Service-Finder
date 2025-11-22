@@ -154,8 +154,10 @@ async function displayServices(services) {
     // Click handlers are automatically handled by event delegation
 }
 
-// Create service card HTML with stars - UPDATED TO BE ASYNC
+// Create service card HTML with stars - FIXED VERSION
 async function createServiceCard(service) {
+    console.log('🔧 Creating card for service:', service.name, 'ID:', service.id);
+    
     const placeholderImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+';
     
     // Get reviews from Supabase instead of localStorage
@@ -169,8 +171,12 @@ async function createServiceCard(service) {
         reviewCount = serviceReviews.length;
     }
     
+    // IMPORTANT: Make sure service.id exists and is properly formatted
+    const serviceId = service.id || service.service_id || 'unknown';
+    console.log('🔧 Final service ID for data attribute:', serviceId);
+    
     return `
-    <li class="service-card" data-service-id="${serviceId}>
+    <li class="service-card" data-service-id="${serviceId}">
         <div class="card-header">
             <img src="${service.photo || placeholderImage}" 
                  alt="${service.name}" 
@@ -532,6 +538,7 @@ setTimeout(checkSupabaseStatus, 1000);
 
 // Also check when window loads
 window.addEventListener('load', checkSupabaseStatus);
+
 
 
 
