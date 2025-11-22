@@ -1,4 +1,4 @@
-// service-details.js - UPDATED FOR SUPABASE
+// service-details.js - UPDATED FOR SUPABASE WITH STAR RATINGS
 let currentService = null;
 const placeholderImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+';
 
@@ -121,39 +121,30 @@ function displayServiceDetails(service) {
                     </div>
                 </div>
 
-<!-- Review Form -->
-<div class="review-form">
-    <h3>Leave a Review</h3>
-    <form id="reviewForm">
-        <div class="form-group">
-            <label for="reviewerName">Your Name (optional):</label>
-            <input type="text" id="reviewerName" placeholder="Anonymous">
-        </div>
-        
-        <div class="form-group">
-            <label>Rating: <span id="selectedRatingText">(Select stars)</span></label>
-            <div class="star-rating">
-                <input type="radio" id="star5" name="rating" value="5">
-                <label for="star5" title="5 stars">★</label>
-                <input type="radio" id="star4" name="rating" value="4">
-                <label for="star4" title="4 stars">★</label>
-                <input type="radio" id="star3" name="rating" value="3">
-                <label for="star3" title="3 stars">★</label>
-                <input type="radio" id="star2" name="rating" value="2">
-                <label for="star2" title="2 stars">★</label>
-                <input type="radio" id="star1" name="rating" value="1">
-                <label for="star1" title="1 star">★</label>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="reviewComment">Your Review:</label>
-            <textarea id="reviewComment" required placeholder="Share your experience with this service..."></textarea>
-        </div>
-        
-        <button type="submit" class="submit-btn">Submit Review</button>
-    </form>
-</div>
+                <!-- Review Form -->
+                <div class="review-form">
+                    <h3>Leave a Review</h3>
+                    <form id="reviewForm">
+                        <div class="form-group">
+                            <label for="reviewerName">Your Name (optional):</label>
+                            <input type="text" id="reviewerName" placeholder="Anonymous">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Rating: <span id="selectedRatingText">(Select stars)</span></label>
+                            <div class="star-rating">
+                                <input type="radio" id="star5" name="rating" value="5">
+                                <label for="star5" title="5 stars">★</label>
+                                <input type="radio" id="star4" name="rating" value="4">
+                                <label for="star4" title="4 stars">★</label>
+                                <input type="radio" id="star3" name="rating" value="3">
+                                <label for="star3" title="3 stars">★</label>
+                                <input type="radio" id="star2" name="rating" value="2">
+                                <label for="star2" title="2 stars">★</label>
+                                <input type="radio" id="star1" name="rating" value="1">
+                                <label for="star1" title="1 star">★</label>
+                            </div>
+                        </div>
                         
                         <div class="form-group">
                             <label for="reviewComment">Your Review:</label>
@@ -184,10 +175,74 @@ function displayServiceDetails(service) {
         console.error('❌ Review form not found!');
     }
 
+    // Setup star rating interactivity
+    setupStarRating();
+
     if (loadingMessage) loadingMessage.style.display = 'none';
     serviceDetails.style.display = 'block';
     
     console.log('✅ Service details displayed');
+}
+
+// Add this function to setup star rating interactivity
+function setupStarRating() {
+    const starInputs = document.querySelectorAll('.star-rating input');
+    const ratingText = document.getElementById('selectedRatingText');
+    
+    starInputs.forEach(star => {
+        star.addEventListener('change', function() {
+            const rating = this.value;
+            let ratingDescription = '';
+            
+            switch(rating) {
+                case '5': ratingDescription = '(Excellent)'; break;
+                case '4': ratingDescription = '(Very Good)'; break;
+                case '3': ratingDescription = '(Good)'; break;
+                case '2': ratingDescription = '(Fair)'; break;
+                case '1': ratingDescription = '(Poor)'; break;
+                default: ratingDescription = '(Select stars)';
+            }
+            
+            if (ratingText) {
+                ratingText.textContent = ratingDescription;
+            }
+        });
+    });
+    
+    // Also update when hovering (optional enhancement)
+    const starLabels = document.querySelectorAll('.star-rating label');
+    starLabels.forEach(label => {
+        label.addEventListener('mouseenter', function() {
+            const stars = document.querySelectorAll('.star-rating label');
+            const currentIndex = Array.from(stars).indexOf(this);
+            
+            stars.forEach((star, index) => {
+                if (index >= currentIndex) {
+                    star.style.color = '#ffc107';
+                } else {
+                    star.style.color = 'var(--color-2)';
+                }
+            });
+        });
+        
+        label.addEventListener('mouseleave', function() {
+            const stars = document.querySelectorAll('.star-rating label');
+            const checkedStar = document.querySelector('.star-rating input:checked');
+            
+            stars.forEach(star => {
+                star.style.color = 'var(--color-2)';
+            });
+            
+            if (checkedStar) {
+                const checkedIndex = Array.from(starInputs).indexOf(checkedStar);
+                stars.forEach((star, index) => {
+                    if (index >= checkedIndex) {
+                        star.style.color = '#ffc107';
+                    }
+                });
+            }
+        });
+    });
 }
 
 async function loadServiceReviews(serviceId) {
@@ -255,24 +310,42 @@ async function submitReview(serviceId) {
         return;
     }
 
-    const name = document.getElementById('reviewerName').value.trim();
-    const rating = document.getElementById('reviewRating').value;
+    const name = document.getElementById('reviewerName').value.trim() || 'Anonymous';
+    const ratingInput = document.querySelector('input[name="rating"]:checked');
     const comment = document.getElementById('reviewComment').value.trim();
     
-    console.log('🔧 Form data:', { name, rating, comment });
+    console.log('🔧 Form data:', { name, rating: ratingInput ? ratingInput.value : 'none', comment });
     
-    if (!name || !rating || !comment) {
-        alert('Please fill in all fields');
+    if (!ratingInput) {
+        alert('Please select a star rating');
+        return;
+    }
+    
+    if (!comment) {
+        alert('Please write a review');
         return;
     }
 
+    const rating = ratingInput.value;
+    
     console.log('🔧 Calling supabaseClient.addReview...');
     const success = await window.supabaseClient.addReview(serviceId, name, rating, comment);
     console.log('🔧 addReview result:', success);
     
     if (success) {
         document.getElementById('reviewForm').reset();
-        await loadServiceReviews(serviceId); // Reload reviews to show the new one
+        document.getElementById('selectedRatingText').textContent = '(Select stars)';
+        // Reset star selection
+        const checkedStar = document.querySelector('.star-rating input:checked');
+        if (checkedStar) {
+            checkedStar.checked = false;
+        }
+        // Reset star colors
+        const stars = document.querySelectorAll('.star-rating label');
+        stars.forEach(star => {
+            star.style.color = 'var(--color-2)';
+        });
+        await loadServiceReviews(serviceId);
     }
 }
 
