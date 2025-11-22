@@ -6,11 +6,14 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import multer from "multer";
 import nodemailer from "nodemailer";
-import { db } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Initialize Vercel Postgres client
+const db = createClient();
 
 // File paths - handle both local and Vercel
 // On Vercel, process.env.VERCEL is set to "1" (string)
@@ -145,8 +148,7 @@ app.use((err, req, res, next) => {
 // Initialize database table for reviews
 async function initReviewsTable() {
   try {
-    const client = await db.connect();
-    await client.sql`
+    await db.sql`
       CREATE TABLE IF NOT EXISTS reviews (
         id SERIAL PRIMARY KEY,
         provider_name VARCHAR(255) NOT NULL,
@@ -157,7 +159,6 @@ async function initReviewsTable() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `;
-    client.release();
     console.log('✅ Reviews table initialized');
   } catch (error) {
     console.error('Error initializing reviews table:', error);
@@ -169,13 +170,11 @@ async function initReviewsTable() {
 // Get reviews for a service (UPDATED for Vercel Postgres)
 app.get("/api/service/:id/reviews", async (req, res) => {
   try {
-    const client = await db.connect();
-    const result = await client.sql`
+    const result = await db.sql`
       SELECT * FROM reviews 
       WHERE service_id = ${parseInt(req.params.id)}
       ORDER BY created_at DESC
     `;
-    client.release();
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -191,13 +190,11 @@ app.post("/api/service/:id/reviews", async (req, res) => {
     
     if (!service) return res.status(404).json({ error: "Service not found" });
 
-    const client = await db.connect();
-    const result = await client.sql`
+    const result = await db.sql`
       INSERT INTO reviews (provider_name, rating, comment, author, service_id)
       VALUES (${service.name}, ${req.body.rating}, ${req.body.comment}, ${req.body.author || "Anonymous"}, ${parseInt(req.params.id)})
       RETURNING *
     `;
-    client.release();
 
     res.json({
       success: true,
@@ -231,10 +228,9 @@ app.get("/services.json", (req, res) => {
 app.get("/api/search", async (req, res) => {
   try {
     const services = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
-    const client = await db.connect();
 
     const servicesWithRatings = await Promise.all(services.map(async (service) => {
-      const reviewsResult = await client.sql`
+      const reviewsResult = await db.sql`
         SELECT rating FROM reviews WHERE service_id = ${service.id}
       `;
       const serviceReviews = reviewsResult.rows;
@@ -249,8 +245,6 @@ app.get("/api/search", async (req, res) => {
         isFeatured: service.isPremium || false
       };
     }));
-
-    client.release();
 
     // Sort: premium services first, then by rating/reviews
     servicesWithRatings.sort((a, b) => {
@@ -285,11 +279,9 @@ app.get("/api/service/:id", async (req, res) => {
     const service = services.find((s) => String(s.id) === req.params.id);
     if (!service) return res.status(404).json({ error: "Service not found" });
 
-    const client = await db.connect();
-    const reviewsResult = await client.sql`
+    const reviewsResult = await db.sql`
       SELECT * FROM reviews WHERE service_id = ${parseInt(req.params.id)} ORDER BY created_at DESC
     `;
-    client.release();
 
     const serviceReviews = reviewsResult.rows;
     const averageRating = serviceReviews.length > 0
@@ -457,7 +449,10 @@ app.post("/api/login", (req, res) => {
 // Admin authentication middleware
 const authenticateAdmin = (req, res, next) => {
   try {
-    const adminPassword = req.headers.authorization || req.body.password || req.query.password;
+    // Safely extract password from various sources
+    const adminPassword = req.headers.authorization || 
+                         (req.body && req.body.password) || 
+                         (req.query && req.query.password);
     const expectedPassword = process.env.ADMIN_PASSWORD || "admin123"; // Default password, should be set in env
     
     if (!adminPassword || adminPassword !== expectedPassword) {
