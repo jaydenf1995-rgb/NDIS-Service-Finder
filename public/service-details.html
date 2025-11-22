@@ -46,5 +46,53 @@
     </footer>
 
     <script src="service-details.js"></script>
+    <!-- Add this section to your service pages -->
+<section class="reviews-section">
+    <h2>Customer Reviews</h2>
+    
+    <div class="review-form">
+        <h3>Share Your Experience</h3>
+        <form id="reviewForm">
+            <div class="form-group">
+                <label for="providerName">Provider Name:</label>
+                <input type="text" id="providerName" name="providerName" required 
+                       placeholder="Enter the service provider's name">
+            </div>
+            
+            <div class="form-group">
+                <label>Your Rating:</label>
+                <div class="star-rating">
+                    <span class="star" data-rating="1">☆</span>
+                    <span class="star" data-rating="2">☆</span>
+                    <span class="star" data-rating="3">☆</span>
+                    <span class="star" data-rating="4">☆</span>
+                    <span class="star" data-rating="5">☆</span>
+                </div>
+                <input type="hidden" id="rating" name="rating" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="comment">Your Review:</label>
+                <textarea id="comment" name="comment" rows="4" required 
+                          placeholder="Share your experience with this service..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="author">Your Name:</label>
+                <input type="text" id="author" name="author" required 
+                       placeholder="How would you like to be displayed?">
+            </div>
+            
+            <button type="submit" class="btn">Submit Review</button>
+        </form>
+    </div>
+    
+    <div id="reviews-container" class="reviews-container">
+        <!-- Reviews will be loaded here automatically -->
+    </div>
+</section>
+
+<!-- Include the new review system -->
+<script src="/js/vercel-reviews.js"></script>
 </body>
 </html>
