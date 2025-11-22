@@ -170,7 +170,7 @@ async function createServiceCard(service) {
     }
     
     return `
-    <li class="service-card">
+    <li class="service-card" data-service-id="${serviceId}>
         <div class="card-header">
             <img src="${service.photo || placeholderImage}" 
                  alt="${service.name}" 
@@ -532,6 +532,7 @@ setTimeout(checkSupabaseStatus, 1000);
 
 // Also check when window loads
 window.addEventListener('load', checkSupabaseStatus);
+
 
 
 
