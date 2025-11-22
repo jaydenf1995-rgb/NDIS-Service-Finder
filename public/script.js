@@ -471,3 +471,40 @@ function updateResultsCount(count) {
         resultsCount.textContent = count;
     }
 }
+// ===== SUPABASE DEBUGGING =====
+console.log('🔧 script.js loaded successfully');
+
+// Check if Supabase is available
+function checkSupabaseStatus() {
+    console.log('🔧 Checking Supabase status...');
+    console.log('🔧 window.supabaseClient exists:', !!window.supabaseClient);
+    
+    if (window.supabaseClient) {
+        console.log('🔧 Available functions:', Object.keys(window.supabaseClient));
+        
+        // Test getting reviews for a specific service
+        if (window.supabaseClient.getServiceReviews) {
+            console.log('🔧 Testing Supabase connection...');
+            
+            // Test with a known service ID
+            const testServiceId = 1763270139958; // Jayden's service
+            window.supabaseClient.getServiceReviews(testServiceId)
+                .then(reviews => {
+                    console.log(`🔧 Test successful: Found ${reviews.length} reviews for service ${testServiceId}`);
+                    console.log('🔧 Sample reviews:', reviews);
+                })
+                .catch(error => {
+                    console.error('🔧 Test failed:', error);
+                });
+        }
+    } else {
+        console.error('❌ Supabase client not available!');
+        console.log('❌ Check if supabase.js is loading before script.js');
+    }
+}
+
+// Wait a moment for Supabase to initialize, then check status
+setTimeout(checkSupabaseStatus, 1000);
+
+// Also check when window loads
+window.addEventListener('load', checkSupabaseStatus);
