@@ -12,22 +12,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('DOM loaded - initializing app...');
     await initializeApp();
 });
-// TEMPORARY DEBUG - Add this right after your DOMContentLoaded event
-console.log('🔄 Starting service card debug...');
 
-// Test clicking on any element
-document.addEventListener('click', function(e) {
-    console.log('🎯 Click detected on:', e.target);
-    console.log('🎯 Closest service-card:', e.target.closest('.service-card'));
-});
-
-// Check the service arrays
-setTimeout(() => {
-    console.log('📊 All services:', allServices);
-    console.log('📊 Filtered services:', filteredServices);
-    console.log('🎯 Service cards on page:', document.querySelectorAll('.service-card').length);
-}, 3000);
-// delete lines 15 - 30 after debug
 async function initializeApp() {
     try {
         console.log('Loading services...');
@@ -247,40 +232,43 @@ function generateStarRating(rating) {
     return stars;
 }
 
-// Make service cards clickable - UPDATED VERSION
+// FIXED CLICK HANDLER - Replace your current setupServiceCardClicks function
 function setupServiceCardClicks() {
-    // Use event delegation instead of attaching to each card
+    console.log('🔧 Setting up service card clicks...');
+    
     document.addEventListener('click', function(event) {
         const serviceCard = event.target.closest('.service-card');
+        
         if (serviceCard) {
-            // Add click feedback
-            serviceCard.style.transform = 'scale(0.98)';
-            serviceCard.style.transition = 'transform 0.15s ease';
+            console.log('🎯 Service card clicked!');
             
-            setTimeout(() => {
-                serviceCard.style.transform = '';
-            }, 150);
+            // Get the service ID from the data attribute
+            const serviceId = serviceCard.getAttribute('data-service-id');
+            console.log('🔧 Service ID from data attribute:', serviceId);
             
-            // Find the service - improved method
-            const serviceIndex = Array.from(document.querySelectorAll('.service-card')).indexOf(serviceCard);
-            let service;
-            
-            // Try filteredServices first, then allServices
-            if (filteredServices.length > 0 && filteredServices[serviceIndex]) {
-                service = filteredServices[serviceIndex];
-            } else if (allServices[serviceIndex]) {
-                service = allServices[serviceIndex];
-            }
-            
-            if (service) {
-                console.log('🔧 Clicked service:', service.name, 'ID:', service.id);
+            if (serviceId) {
+                // Add click feedback
+                serviceCard.style.transform = 'scale(0.98)';
+                serviceCard.style.transition = 'transform 0.15s ease';
+                
                 setTimeout(() => {
-                    window.location.href = `service-details.html?id=${service.id}`;
+                    serviceCard.style.transform = '';
+                }, 150);
+                
+                // Navigate to service details
+                console.log('🔧 Navigating to service details page...');
+                setTimeout(() => {
+                    window.location.href = `service-details.html?id=${serviceId}`;
                 }, 200);
             } else {
-                console.error('❌ Could not find service for clicked card');
+                console.error('❌ No service ID found on clicked card');
+                console.log('Card HTML:', serviceCard.outerHTML);
             }
         }
+    });
+    
+    console.log('✅ Service card click handler setup complete');
+}
     });
     
     console.log('✅ Service card click handlers setup');
@@ -548,5 +536,6 @@ setTimeout(checkSupabaseStatus, 1000);
 
 // Also check when window loads
 window.addEventListener('load', checkSupabaseStatus);
+
 
 
