@@ -2544,3 +2544,27 @@ a[href]:not([class]) {
 .star-rating label:hover ~ label {
     color: var(--color-2);
 }
+/* Make sure service cards are properly clickable */
+.service-card {
+    cursor: pointer;
+    position: relative;
+}
+
+/* Allow text selection in content areas */
+.service-card .service-description,
+.service-card h3,
+.service-card .contact-info,
+.service-card .service-tags,
+.service-card .service-card-rating {
+    cursor: auto;
+    user-select: text;
+}
+
+/* Click feedback animation */
+.service-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.service-card:active {
+    transform: scale(0.98);
+}
