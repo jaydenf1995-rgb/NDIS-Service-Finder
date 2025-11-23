@@ -892,13 +892,63 @@ app.get("/api/admin/pending", authenticateAdmin, async (req, res) => {
 // Approve service (admin only)
 app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
     try {
+        const serviceId = parseInt(req.params.id);
+        
         if (dbInitialized) {
+            // Check if service exists first
+            const serviceResult = await db.sql`
+                SELECT * FROM services 
+                WHERE id = ${serviceId} AND approved = false AND rejected = false
+            `;
+            
+            if (serviceResult.rows.length === 0) {
+                return res.status(404).json({ error: "Service not found in pending list." });
+            }
+            
+            // Update database
             await db.sql`
                 UPDATE services 
                 SET approved = true, approved_at = NOW() 
-                WHERE id = ${parseInt(req.params.id)}
+                WHERE id = ${serviceId}
             `;
+            
+            // Sync to public/services.json for frontend compatibility
+            const allServicesResult = await db.sql`
+                SELECT * FROM services WHERE approved = true ORDER BY created_at DESC
+            `;
+            
+            const publicServicesPath = path.join(__dirname, "public", "services.json");
+            try {
+                const publicDir = path.dirname(publicServicesPath);
+                if (!fs.existsSync(publicDir)) {
+                    fs.mkdirSync(publicDir, { recursive: true });
+                }
+                
+                // Convert database format to JSON format
+                const servicesForJson = allServicesResult.rows.map(service => ({
+                    id: service.id,
+                    name: service.name,
+                    email: service.email,
+                    phone: service.phone,
+                    location: service.location,
+                    address: service.address,
+                    services: service.services,
+                    registered: service.registered,
+                    description: service.description,
+                    aboutMe: service.about_me,
+                    photo: service.photo,
+                    dateAdded: service.created_at
+                }));
+                
+                fs.writeFileSync(publicServicesPath, JSON.stringify(servicesForJson, null, 2));
+                console.log(`✅ Synced ${servicesForJson.length} approved services to public/services.json`);
+            } catch (err) {
+                console.warn("Could not sync to public/services.json:", err.message);
+            }
+            
+            return res.json({ success: true, message: "Service approved and added to live listings." });
         } else {
+            // File-based storage fallback
             let pendingServices = [];
             if (fs.existsSync(PENDING_FILE)) {
                 pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
