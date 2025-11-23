@@ -17,13 +17,20 @@ async function initializeApp() {
     try {
         console.log('Loading services...');
         allServices = await loadServices();
+        
+        // ADD SAFETY CHECK
+        if (!allServices || !Array.isArray(allServices)) {
+            console.warn('Invalid services data, using fallback');
+            allServices = getFallbackServices();
+        }
+        
         console.log('Services loaded:', allServices.length);
         
         // Initialize the app
         initializeStats();
         await displayServices(allServices);
         setupEventListeners();
-        setupServiceCardClicks(); // Make sure this is called
+        setupServiceCardClicks();
         updateResultsCount(allServices.length);
         
         console.log('App initialized successfully');
@@ -33,12 +40,12 @@ async function initializeApp() {
         initializeStats();
         displayServices(allServices);
         setupEventListeners();
-        setupServiceCardClicks(); // And in error case too
+        setupServiceCardClicks();
         updateResultsCount(allServices.length);
     }
 }
 
-// Replace the service loading function in script.js
+// FIXED service loading function
 async function loadServices() {
     try {
         showLoading(true);
@@ -51,22 +58,28 @@ async function loadServices() {
         }
         
         const services = await response.json();
-        displayServices(services);
-        allServices = services; // Make sure to store for filtering
+        
+        // ADD SAFETY CHECKS
+        if (!services) {
+            console.warn('API returned null/undefined, using empty array');
+            return [];
+        }
+        
+        if (!Array.isArray(services)) {
+            console.warn('API did not return an array, converting:', typeof services);
+            return Array.isArray(services) ? services : [services];
+        }
+        
+        console.log(`✅ Loaded ${services.length} services from API`);
+        return services; // ← THIS WAS MISSING!
         
     } catch (error) {
         console.error('Error loading services:', error);
         document.getElementById('serviceList').innerHTML = 
             '<li class="service-card"><p>Error loading services. Please try again later.</p></li>';
+        return []; // Return empty array on error
     } finally {
         showLoading(false);
-    }
-}
-
-function showLoading(show) {
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    if (loadingIndicator) {
-        loadingIndicator.style.display = show ? 'block' : 'none';
     }
 }
 // Fallback data in case JSON fails
@@ -550,6 +563,7 @@ setTimeout(checkSupabaseStatus, 1000);
 
 // Also check when window loads
 window.addEventListener('load', checkSupabaseStatus);
+
 
 
 
