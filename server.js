@@ -313,6 +313,44 @@ async function initReviewsTable() {
   }
 }
 
+// Updated Admin authentication middleware - checks both username and password
+const authenticateAdmin = (req, res, next) => {
+  try {
+    // Safely extract username and password from query parameters
+    const adminUsername = req.query.username;
+    const adminPassword = req.query.password;
+    
+    const expectedUsername = process.env.ADMIN_USERNAME || "admin";
+    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
+    
+    console.log(`[Auth] Attempting admin login - Username: ${adminUsername}, Expected: ${expectedUsername}`);
+    
+    if (!adminUsername || !adminPassword) {
+      console.warn("[Auth] Admin access attempted without username or password");
+      return res.status(401).json({ error: "Unauthorized. Admin access requires both username and password." });
+    }
+    
+    if (adminUsername !== expectedUsername) {
+      console.warn(`[Auth] Admin access attempted with incorrect username: ${adminUsername}`);
+      return res.status(401).json({ error: "Unauthorized. Admin access required." });
+    }
+    
+    if (adminPassword !== expectedPassword) {
+      console.warn("[Auth] Admin access attempted with incorrect password");
+      return res.status(401).json({ error: "Unauthorized. Admin access required." });
+    }
+    
+    // Both username and password match, proceed
+    console.log("[Auth] Admin authentication successful");
+    next();
+  } catch (err) {
+    console.error("[Auth] Error in authenticateAdmin middleware:", err);
+    console.error("[Auth] Error message:", err.message);
+    console.error("[Auth] Error stack:", err.stack);
+    return res.status(500).json({ error: "Authentication error: " + (err.message || "Unknown error") });
+  }
+};
+
 // Routes (keep all your existing routes, but update review-related ones)
 
 // Get reviews for a service (UPDATED for Vercel Postgres)
@@ -473,9 +511,6 @@ app.get("/api/service/:id", async (req, res) => {
   }
 });
 
-// KEEP ALL YOUR OTHER EXISTING ROUTES EXACTLY AS THEY ARE
-// (The file-based routes for services, users, etc. will continue to work)
-
 // Add new service (to pending.json)
 app.post("/api/add", upload.single("photo"), async (req, res) => {
   try {
@@ -634,43 +669,6 @@ app.post("/api/login", (req, res) => {
     res.status(500).json({ error: "Failed to login: " + err.message });
   }
 });
-
-// Admin authentication middleware
-const authenticateAdmin = (req, res, next) => {
-  try {
-    // Safely extract password from various sources
-    let adminPassword = null;
-    
-    if (req.query && req.query.password) {
-      adminPassword = req.query.password;
-    } else if (req.body && req.body.password) {
-      adminPassword = req.body.password;
-    } else if (req.headers && req.headers.authorization) {
-      adminPassword = req.headers.authorization.replace('Bearer ', '').trim();
-    }
-    
-    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123"; // Default password, should be set in env
-    
-    if (!adminPassword) {
-      console.warn("[Auth] Admin access attempted without password");
-      return res.status(401).json({ error: "Unauthorized. Admin access required." });
-    }
-    
-    if (adminPassword !== expectedPassword) {
-      console.warn("[Auth] Admin access attempted with incorrect password");
-      return res.status(401).json({ error: "Unauthorized. Admin access required." });
-    }
-    
-    // Password matches, proceed
-    console.log("[Auth] Admin authentication successful");
-    next();
-  } catch (err) {
-    console.error("[Auth] Error in authenticateAdmin middleware:", err);
-    console.error("[Auth] Error message:", err.message);
-    console.error("[Auth] Error stack:", err.stack);
-    return res.status(500).json({ error: "Authentication error: " + (err.message || "Unknown error") });
-  }
-};
 
 // Get pending services (admin only)
 app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
@@ -1083,5 +1081,3 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
 }
 
 export default app;
-
-
