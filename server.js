@@ -236,8 +236,33 @@ app.use(express.urlencoded({ extended: true }));
 
 // Lazy database initialization middleware for Vercel serverless functions
 const ensureDatabaseInitialized = async (req, res, next) => {
+    console.log('🔧 Middleware called for:', req.method, req.path, 'dbInitialized:', dbInitialized, 'dbInitializing:', dbInitializing);
+    
+    // If already initialized, proceed
+    if (dbInitialized) {
+        console.log('✅ Database already initialized, proceeding');
+        return next();
+    }
+    
+    // If initialization is in progress, wait for it
+    if (dbInitializing) {
+        console.log('⏳ Database initialization in progress, waiting...');
+        // Wait up to 10 seconds for initialization
+        let waitCount = 0;
+        while (dbInitializing && waitCount < 100) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            waitCount++;
+        }
+        if (dbInitialized) {
+            console.log('✅ Database initialized after waiting');
+            return next();
+        }
+    }
+    
+    // Start initialization
     if (!dbInitialized && !dbInitializing) {
         dbInitializing = true;
+        console.log('🔧 Starting lazy database initialization...');
         try {
             console.log('🔧 Lazy database initialization triggered by request to:', req.path);
             const dbSuccess = await initializeDatabase();
@@ -253,11 +278,15 @@ const ensureDatabaseInitialized = async (req, res, next) => {
                 console.log('⚠️ Database initialization failed (lazy), using file-based storage');
             }
         } catch (err) {
-            console.error("Error in lazy database initialization:", err);
+            console.error("❌ Error in lazy database initialization:", err);
+            console.error("❌ Error stack:", err.stack);
         } finally {
             dbInitializing = false;
+            console.log('🔧 Lazy initialization complete, dbInitialized:', dbInitialized);
         }
     }
+    
+    // Proceed to next middleware/route
     next();
 };
 
