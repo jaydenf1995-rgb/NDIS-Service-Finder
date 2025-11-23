@@ -29,19 +29,49 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize Vercel Postgres client (only if connection string is available)
+// Initialize Vercel Postgres client with proper async initialization
 let db = null;
-try {
-  // Check if Postgres environment variables are available
-  if (process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING) {
-    db = createClient();
-    console.log('✅ Vercel Postgres client initialized');
-  } else {
-    console.warn('⚠️ Postgres environment variables not found. Reviews feature will be disabled.');
-  }
-} catch (err) {
-  console.warn('⚠️ Could not initialize Postgres client:', err.message);
-  db = null;
+let dbInitialized = false;
+
+async function initializeDatabase() {
+    console.log('🔧 Starting database initialization...');
+    
+    try {
+        // Use POSTGRES_URL_NON_POOLING specifically for the client
+        const connectionString = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL || process.env.DATABASE_URL;
+        
+        if (!connectionString) {
+            console.warn('⚠️ No Postgres connection string found');
+            return false;
+        }
+
+        console.log('🔧 Creating Postgres client with connection string...');
+        
+        // Create client with explicit configuration
+        db = createClient({
+            connectionString: connectionString
+        });
+
+        console.log('🔧 Testing database connection...');
+        
+        // Simple test query with timeout
+        const testResult = await db.sql`SELECT version() as pg_version, NOW() as current_time`;
+        
+        console.log('✅ Database connection successful');
+        console.log('✅ PostgreSQL Version:', testResult.rows[0].pg_version);
+        console.log('✅ Current Time:', testResult.rows[0].current_time);
+        
+        dbInitialized = true;
+        console.log('✅ Vercel Postgres client initialized successfully');
+        return true;
+        
+    } catch (err) {
+        console.error('❌ Database initialization failed:', err.message);
+        console.error('❌ Full error:', err);
+        db = null;
+        dbInitialized = false;
+        return false;
+    }
 }
 
 // File paths - handle both local and Vercel
@@ -467,7 +497,15 @@ const authenticateAdmin = (req, res, next) => {
 };
 
 // Routes (keep all your existing routes, but update review-related ones)
-
+// Simple debug route to test server
+app.get("/api/debug/simple", (req, res) => {
+    res.json({
+        status: "server_responding",
+        timestamp: new Date().toISOString(),
+        dbInitialized: dbInitialized,
+        hasPostgresVars: !!(process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL)
+    });
+});
 // Get reviews for a service (UPDATED for Vercel Postgres)
 app.get("/api/service/:id/reviews", async (req, res) => {
   if (!db) {
@@ -536,7 +574,7 @@ app.get("/api/search", async (req, res) => {
     try {
         let services = [];
         
-        if (db) {
+        if (dbInitialized) {
             // Get approved services from database
             const result = await db.sql`
                 SELECT * FROM services 
@@ -554,7 +592,7 @@ app.get("/api/search", async (req, res) => {
             let averageRating = 0;
             let reviewCount = 0;
             
-            if (db) {
+            if (dbInitialized) {
                 try {
                     const reviewsResult = await db.sql`
                         SELECT rating FROM reviews WHERE service_id = ${service.id}
@@ -605,7 +643,7 @@ app.get("/api/service/:id", async (req, res) => {
     try {
         let service = null;
         
-        if (db) {
+        if (dbInitialized) {
             const result = await db.sql`
                 SELECT * FROM services WHERE id = ${parseInt(req.params.id)}
             `;
@@ -621,7 +659,7 @@ app.get("/api/service/:id", async (req, res) => {
         let serviceReviews = [];
         let averageRating = 0;
         
-        if (db) {
+        if (dbInitialized) {
             try {
                 const reviewsResult = await db.sql`
                     SELECT * FROM reviews WHERE service_id = ${parseInt(req.params.id)} ORDER BY created_at DESC
@@ -686,7 +724,7 @@ app.post("/api/add", upload.single("photo"), async (req, res) => {
 
         const serviceId = Date.now();
 
-        if (db) {
+        if (dbInitialized) {
             // Save to database
             await db.sql`
                 INSERT INTO services (
@@ -774,7 +812,7 @@ app.get("/api/admin/pending", authenticateAdmin, async (req, res) => {
     try {
         let pendingServices = [];
         
-        if (db) {
+        if (dbInitialized) {
             const result = await db.sql`
                 SELECT * FROM services 
                 WHERE approved = false AND rejected = false 
@@ -802,7 +840,7 @@ app.get("/api/admin/pending", authenticateAdmin, async (req, res) => {
 // Approve service (admin only) - UPDATED for Postgres
 app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
     try {
-        if (db) {
+        if (dbInitialized) {
             // Update service in database
             await db.sql`
                 UPDATE services 
@@ -1119,7 +1157,7 @@ app.get("/api/debug/service/:id", async (req, res) => {
         
         let service = null;
         
-        if (db) {
+        if (dbInitialized) {
             const result = await db.sql`SELECT * FROM services WHERE id = ${parseInt(serviceId)}`;
             service = result.rows[0];
         }
@@ -1193,32 +1231,43 @@ app.get("/api/debug/approve-test/:id", authenticateAdmin, async (req, res) => {
 // Initialize database and start server
 const PORT = process.env.PORT || 3000;
 
-// For Vercel deployment, export the app
-const isVercelEnv = process.env.VERCEL === "1" || process.env.VERCEL === "true" || process.env.VERCEL === true;
-if (isVercelEnv) {
-    // Initialize database when deployed on Vercel
-    Promise.all([
-        initReviewsTable(),
-        initServicesTable()
-    ]).catch(err => {
-        console.error("Error initializing database tables:", err);
-    });
-}
+async function startServer() {
+    // Initialize database first
+    const dbSuccess = await initializeDatabase();
+    
+    if (dbSuccess) {
+        console.log('✅ Database initialized successfully');
+        // Initialize tables
+        await Promise.all([
+            initReviewsTable(),
+            initServicesTable()
+        ]).catch(err => {
+            console.error("Error initializing database tables:", err);
+        });
+    } else {
+        console.log('⚠️ Using file-based storage (database not available)');
+    }
 
-// For local development, start the server
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    Promise.all([
-        initReviewsTable(),
-        initServicesTable()
-    ]).then(() => {
+    // For Vercel deployment, export the app
+    const isVercelEnv = process.env.VERCEL === "1" || process.env.VERCEL === "true" || process.env.VERCEL === true;
+    
+    if (isVercelEnv) {
+        console.log('✅ Server ready for Vercel deployment');
+        console.log(`🗄️ Database: ${dbSuccess ? '✅ Postgres Enabled' : '⚠️ File-based Storage'}`);
+    } else {
+        // For local development, start the server
         app.listen(PORT, () => {
             console.log(`✅ Server running at http://localhost:${PORT}`);
-            console.log(`📧 Email notifications: ${isEmailConfigured() ? '✅ Enabled' : '❌ Disabled (configure .env file)'}`);
-            console.log(`👤 User system: ✅ Enabled`);
-            console.log(`🗄️ Vercel Postgres: ✅ Enabled for services and reviews`);
+            console.log(`📧 Email notifications: ${isEmailConfigured() ? '✅ Enabled' : '❌ Disabled'}`);
+            console.log(`🗄️ Database: ${dbSuccess ? '✅ Postgres Enabled' : '⚠️ File-based Storage'}`);
         });
-    });
+    }
 }
+
+// Start the server
+startServer().catch(err => {
+    console.error('❌ Failed to start server:', err);
+});
 
 export default app;
 
