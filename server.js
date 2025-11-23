@@ -889,6 +889,44 @@ app.get("/api/admin/pending", authenticateAdmin, async (req, res) => {
     }
 });
 
+// Get approved services (admin only)
+app.get("/api/admin/services", authenticateAdmin, async (req, res) => {
+    try {
+        let approvedServices = [];
+        
+        if (dbInitialized) {
+            const result = await db.sql`
+                SELECT * FROM services 
+                WHERE approved = true 
+                ORDER BY created_at DESC
+            `;
+            approvedServices = result.rows.map(service => ({
+                id: service.id,
+                name: service.name,
+                email: service.email,
+                phone: service.phone,
+                location: service.location,
+                address: service.address,
+                services: typeof service.services === 'string' ? JSON.parse(service.services) : service.services,
+                registered: service.registered,
+                description: service.description,
+                aboutMe: service.about_me || '',
+                photo: service.photo || '',
+                dateAdded: service.created_at
+            }));
+        } else {
+            if (fs.existsSync(SERVICES_FILE)) {
+                approvedServices = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
+            }
+        }
+        
+        res.json(approvedServices);
+    } catch (err) {
+        console.error("Error loading approved services:", err);
+        res.status(500).json({ error: "Failed to load approved services" });
+    }
+});
+
 // Approve service (admin only)
 app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
     try {
@@ -932,11 +970,11 @@ app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
                     phone: service.phone,
                     location: service.location,
                     address: service.address,
-                    services: service.services,
+                    services: typeof service.services === 'string' ? JSON.parse(service.services) : service.services,
                     registered: service.registered,
                     description: service.description,
-                    aboutMe: service.about_me,
-                    photo: service.photo,
+                    aboutMe: service.about_me || '',
+                    photo: service.photo || '',
                     dateAdded: service.created_at
                 }));
                 
@@ -975,9 +1013,9 @@ app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
 
             const publicServicesPath = path.join(__dirname, "public", "services.json");
             fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
+            
+            return res.json({ success: true, message: "Service approved and added to live listings." });
         }
-
-        res.json({ success: true, message: "Service approved and added to live listings." });
     } catch (err) {
         console.error("Error approving service:", err);
         res.status(500).json({ error: "Failed to approve service: " + err.message });
