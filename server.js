@@ -624,18 +624,36 @@ app.post("/api/login", (req, res) => {
 const authenticateAdmin = (req, res, next) => {
   try {
     // Safely extract password from various sources
-    const adminPassword = req.headers.authorization || 
-                         (req.body && req.body.password) || 
-                         (req.query && req.query.password);
+    let adminPassword = null;
+    
+    if (req.query && req.query.password) {
+      adminPassword = req.query.password;
+    } else if (req.body && req.body.password) {
+      adminPassword = req.body.password;
+    } else if (req.headers && req.headers.authorization) {
+      adminPassword = req.headers.authorization.replace('Bearer ', '').trim();
+    }
+    
     const expectedPassword = process.env.ADMIN_PASSWORD || "admin123"; // Default password, should be set in env
     
-    if (!adminPassword || adminPassword !== expectedPassword) {
+    if (!adminPassword) {
+      console.warn("[Auth] Admin access attempted without password");
       return res.status(401).json({ error: "Unauthorized. Admin access required." });
     }
+    
+    if (adminPassword !== expectedPassword) {
+      console.warn("[Auth] Admin access attempted with incorrect password");
+      return res.status(401).json({ error: "Unauthorized. Admin access required." });
+    }
+    
+    // Password matches, proceed
+    console.log("[Auth] Admin authentication successful");
     next();
   } catch (err) {
-    console.error("Error in authenticateAdmin middleware:", err);
-    return res.status(500).json({ error: "Authentication error: " + err.message });
+    console.error("[Auth] Error in authenticateAdmin middleware:", err);
+    console.error("[Auth] Error message:", err.message);
+    console.error("[Auth] Error stack:", err.stack);
+    return res.status(500).json({ error: "Authentication error: " + (err.message || "Unknown error") });
   }
 };
 
@@ -643,54 +661,63 @@ const authenticateAdmin = (req, res, next) => {
 app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
   // Wrap everything in a try-catch to prevent any unhandled errors
   try {
+    console.log(`[Admin] Loading pending services from: ${PENDING_FILE}`);
     let pendingServices = [];
     
     // Ensure the directory exists
     try {
       const fileDir = path.dirname(PENDING_FILE);
+      console.log(`[Admin] Checking directory: ${fileDir}`);
       // On Vercel, /tmp should always exist, but check anyway
       if (!fs.existsSync(fileDir)) {
+        console.log(`[Admin] Creating directory: ${fileDir}`);
         fs.mkdirSync(fileDir, { recursive: true });
       }
     } catch (dirError) {
-      console.error("Error creating directory:", dirError);
+      console.error("[Admin] Error creating directory:", dirError);
+      console.error("[Admin] Directory error stack:", dirError.stack);
       // Continue anyway, might work if directory already exists
     }
     
     // Ensure the file exists
     try {
       if (!fs.existsSync(PENDING_FILE)) {
+        console.log(`[Admin] Creating pending.json file: ${PENDING_FILE}`);
         fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
       }
     } catch (fileError) {
-      console.error("Error creating pending.json file:", fileError);
+      console.error("[Admin] Error creating pending.json file:", fileError);
+      console.error("[Admin] File error stack:", fileError.stack);
       // Return empty array if we can't create the file
       return res.status(200).json([]);
     }
     
     // Read and parse the file
     try {
+      console.log(`[Admin] Reading file: ${PENDING_FILE}`);
       const fileContent = fs.readFileSync(PENDING_FILE, "utf-8");
       if (fileContent && fileContent.trim()) {
         pendingServices = JSON.parse(fileContent);
         // Ensure it's an array
         if (!Array.isArray(pendingServices)) {
-          console.warn("pending.json is not an array, resetting to empty array");
+          console.warn("[Admin] pending.json is not an array, resetting to empty array");
           pendingServices = [];
           try {
             fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
           } catch (writeErr) {
-            console.error("Error writing empty array:", writeErr);
+            console.error("[Admin] Error writing empty array:", writeErr);
           }
         }
       }
+      console.log(`[Admin] Loaded ${pendingServices.length} pending services`);
     } catch (parseError) {
-      console.error("Error parsing pending.json:", parseError);
+      console.error("[Admin] Error parsing pending.json:", parseError);
+      console.error("[Admin] Parse error stack:", parseError.stack);
       // If file is corrupted, reset it
       try {
         fs.writeFileSync(PENDING_FILE, "[]", "utf-8");
       } catch (writeError) {
-        console.error("Error resetting pending.json:", writeError);
+        console.error("[Admin] Error resetting pending.json:", writeError);
       }
       pendingServices = [];
     }
@@ -699,8 +726,9 @@ app.get("/api/admin/pending", authenticateAdmin, (req, res) => {
     return res.status(200).json(pendingServices);
   } catch (err) {
     // Catch any unexpected errors
-    console.error("Unexpected error in /api/admin/pending:", err);
-    console.error("Error stack:", err.stack);
+    console.error("[Admin] Unexpected error in /api/admin/pending:", err);
+    console.error("[Admin] Error message:", err.message);
+    console.error("[Admin] Error stack:", err.stack);
     // Return empty array instead of error to prevent 500
     return res.status(200).json([]);
   }
@@ -947,14 +975,37 @@ app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
 // Get all approved services (admin only) - for admin panel to show existing listings
 app.get("/api/admin/services", authenticateAdmin, (req, res) => {
   try {
+    console.log(`[Admin] Loading approved services from: ${SERVICES_FILE}`);
     let approvedServices = [];
+    
     if (fs.existsSync(SERVICES_FILE)) {
-      approvedServices = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
+      try {
+        const fileContent = fs.readFileSync(SERVICES_FILE, "utf-8");
+        if (fileContent && fileContent.trim()) {
+          approvedServices = JSON.parse(fileContent);
+          // Ensure it's an array
+          if (!Array.isArray(approvedServices)) {
+            console.warn("[Admin] services.json is not an array, resetting to empty array");
+            approvedServices = [];
+          }
+        }
+        console.log(`[Admin] Loaded ${approvedServices.length} approved services`);
+      } catch (parseError) {
+        console.error("[Admin] Error parsing services.json:", parseError);
+        console.error("[Admin] Parse error stack:", parseError.stack);
+        approvedServices = [];
+      }
+    } else {
+      console.log(`[Admin] Services file does not exist: ${SERVICES_FILE}`);
     }
+    
     res.json(approvedServices);
   } catch (err) {
-    console.error("Error loading approved services:", err);
-    res.status(500).json({ error: "Failed to load services: " + err.message });
+    console.error("[Admin] Unexpected error loading approved services:", err);
+    console.error("[Admin] Error message:", err.message);
+    console.error("[Admin] Error stack:", err.stack);
+    // Return empty array instead of 500 error
+    res.status(200).json([]);
   }
 });
 
