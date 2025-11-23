@@ -200,28 +200,68 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/uploads/:filename", (req, res) => {
   try {
     const filename = req.params.filename;
-    let filePath;
+    
+    // Try multiple possible locations
+    const possiblePaths = [];
     
     if (isVercel) {
-      // On Vercel, serve from /tmp/uploads
-      filePath = path.join("/tmp", "uploads", filename);
+      // On Vercel, try /tmp/uploads first (ephemeral, but might exist)
+      possiblePaths.push(path.join("/tmp", "uploads", filename));
+      // Also try public/uploads as fallback (if files were synced there)
+      possiblePaths.push(path.join(__dirname, "public", "uploads", filename));
     } else {
       // Local development - serve from public/uploads
-      filePath = path.join(__dirname, "public", "uploads", filename);
+      possiblePaths.push(path.join(__dirname, "public", "uploads", filename));
     }
     
-    if (fs.existsSync(filePath)) {
+    // Try each path until we find the file
+    let filePath = null;
+    for (const testPath of possiblePaths) {
+      if (fs.existsSync(testPath)) {
+        filePath = testPath;
+        break;
+      }
+    }
+    
+    if (filePath) {
+      // Set proper content type based on file extension
+      const ext = path.extname(filename).toLowerCase();
+      const contentTypeMap = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.svg': 'image/svg+xml'
+      };
+      const contentType = contentTypeMap[ext] || 'image/jpeg';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
       res.sendFile(filePath);
     } else {
-      res.status(404).json({ error: "Image not found" });
+      console.warn(`Image not found: ${filename}. Tried paths:`, possiblePaths);
+      res.status(404).json({ 
+        error: "Image not found",
+        filename: filename,
+        triedPaths: possiblePaths
+      });
     }
   } catch (err) {
     console.error("Error serving image:", err);
-    res.status(500).json({ error: "Failed to serve image" });
+    res.status(500).json({ error: "Failed to serve image", message: err.message });
   }
 });
 
-app.use(express.static(path.join(__dirname, "public")));
+// Serve static files from public directory
+// This will also serve files from public/uploads if they exist there
+app.use(express.static(path.join(__dirname, "public"), {
+  // Serve uploads with proper caching
+  setHeaders: (res, filePath) => {
+    if (filePath.includes('uploads')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+    }
+  }
+}));
 
 // Global error handler for unhandled errors
 app.use((err, req, res, next) => {
@@ -455,18 +495,35 @@ app.post("/api/add", upload.single("photo"), async (req, res) => {
       const filename = `${timestamp}-${Math.floor(Math.random() * 1000000)}${ext}`;
       
       if (isVercel) {
-        // On Vercel, save to /tmp/uploads
+        // On Vercel, save to /tmp/uploads (ephemeral - files won't persist)
+        // NOTE: For production on Vercel, consider using Vercel Blob Storage or AWS S3
+        // Files in /tmp are lost between deployments and serverless invocations
         const uploadDir = path.join("/tmp", "uploads");
         if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
         const filePath = path.join(uploadDir, filename);
         fs.writeFileSync(filePath, req.file.buffer);
+        console.log(`✅ Saved image to /tmp/uploads/${filename} (ephemeral on Vercel)`);
         photoPath = `/uploads/${filename}`;
+        
+        // Also try to save to public/uploads if possible (may fail on Vercel as it's read-only)
+        try {
+          const publicUploadDir = path.join(__dirname, "public", "uploads");
+          if (!fs.existsSync(publicUploadDir)) {
+            fs.mkdirSync(publicUploadDir, { recursive: true });
+          }
+          const publicFilePath = path.join(publicUploadDir, filename);
+          fs.writeFileSync(publicFilePath, req.file.buffer);
+          console.log(`✅ Also saved image to public/uploads/${filename}`);
+        } catch (publicErr) {
+          console.warn("⚠️ Could not save to public/uploads (expected on Vercel):", publicErr.message);
+        }
       } else {
         // Local development - save to public/uploads
         const uploadDir = path.join(__dirname, "public", "uploads");
         if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
         const filePath = path.join(uploadDir, filename);
         fs.writeFileSync(filePath, req.file.buffer);
+        console.log(`✅ Saved image to public/uploads/${filename}`);
         photoPath = `uploads/${filename}`;
       }
     }
