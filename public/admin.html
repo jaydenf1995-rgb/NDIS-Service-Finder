@@ -279,53 +279,75 @@
                 }
 
                 const services = await response.json();
+                // Ensure services is an array
+                if (!Array.isArray(services)) {
+                    console.error('Invalid services data:', services);
+                    displayPendingServices([]);
+                    return;
+                }
                 displayPendingServices(services);
             } catch (error) {
                 console.error('Error loading pending services:', error);
                 document.getElementById('pendingServicesList').innerHTML = 
-                    '<div class="no-pending">Error loading pending services. Please refresh the page.</div>';
+                    '<div class="no-pending">Error loading pending services: ' + error.message + '. Please refresh the page.</div>';
             }
         }
 
         function displayPendingServices(services) {
             const container = document.getElementById('pendingServicesList');
             
-            if (services.length === 0) {
+            if (!services || services.length === 0) {
                 container.innerHTML = '<div class="no-pending">No pending services to review. All caught up! 🎉</div>';
                 return;
             }
 
-            container.innerHTML = services.map(service => `
+            container.innerHTML = services.map(service => {
+                // Safely handle services array
+                const servicesList = Array.isArray(service.services) 
+                    ? service.services.join(', ') 
+                    : (service.services || 'Not specified');
+                
+                // Safely handle date
+                let dateStr = 'Unknown';
+                try {
+                    if (service.dateAdded) {
+                        dateStr = new Date(service.dateAdded).toLocaleDateString();
+                    }
+                } catch (e) {
+                    console.warn('Error parsing date:', e);
+                }
+                
+                return `
                 <div class="pending-service" data-service-id="${service.id}">
-                    <h3>${service.name}</h3>
+                    <h3>${service.name || 'Unnamed Service'}</h3>
                     <div class="service-details">
                         <div class="service-detail-item">
                             <strong>Email:</strong>
-                            <a href="mailto:${service.email}">${service.email}</a>
+                            <a href="mailto:${service.email || ''}">${service.email || 'Not provided'}</a>
                         </div>
                         <div class="service-detail-item">
                             <strong>Phone:</strong>
-                            <a href="tel:${service.phone}">${service.phone}</a>
+                            <a href="tel:${service.phone || ''}">${service.phone || 'Not provided'}</a>
                         </div>
                         <div class="service-detail-item">
                             <strong>Location:</strong>
-                            ${service.location}
+                            ${service.location || 'Not provided'}
                         </div>
                         <div class="service-detail-item">
                             <strong>Address:</strong>
-                            ${service.address}
+                            ${service.address || 'Not provided'}
                         </div>
                         <div class="service-detail-item">
                             <strong>Services:</strong>
-                            ${service.services.join(', ')}
+                            ${servicesList}
                         </div>
                         <div class="service-detail-item">
                             <strong>NDIS Registered:</strong>
-                            ${service.registered}
+                            ${service.registered || 'Not specified'}
                         </div>
                         <div class="service-detail-item" style="grid-column: 1 / -1;">
                             <strong>Description:</strong>
-                            ${service.description}
+                            ${service.description || 'No description provided'}
                         </div>
                         ${service.aboutMe ? `
                         <div class="service-detail-item" style="grid-column: 1 / -1;">
@@ -336,12 +358,12 @@
                         ${service.photo ? `
                         <div class="service-detail-item" style="grid-column: 1 / -1;">
                             <strong>Photo:</strong>
-                            <img src="${service.photo.startsWith('http') ? service.photo : (service.photo.startsWith('/') ? service.photo : '/' + service.photo)}" alt="${service.name}" class="service-photo" onerror="this.style.display='none'">
+                            <img src="${service.photo.startsWith('http') ? service.photo : (service.photo.startsWith('/') ? service.photo : '/' + service.photo)}" alt="${service.name || 'Service'}" class="service-photo" onerror="this.style.display='none'">
                         </div>
                         ` : ''}
                         <div class="service-detail-item">
                             <strong>Submitted:</strong>
-                            ${new Date(service.dateAdded).toLocaleDateString()}
+                            ${dateStr}
                         </div>
                     </div>
                     <div class="rejection-reason" id="reject-${service.id}">
@@ -354,7 +376,8 @@
                         <button class="btn-reject" id="confirm-reject-${service.id}" style="display: none;" onclick="rejectService(${service.id})">Confirm Rejection</button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function showRejectionReason(serviceId) {
@@ -456,62 +479,85 @@
                 }
 
                 const services = await response.json();
+                // Ensure services is an array
+                if (!Array.isArray(services)) {
+                    console.error('Invalid services data:', services);
+                    displayApprovedServices([]);
+                    return;
+                }
                 displayApprovedServices(services);
             } catch (error) {
                 console.error('Error loading approved services:', error);
                 document.getElementById('approvedServicesList').innerHTML = 
-                    '<div class="no-pending">Error loading approved services. Please refresh the page.</div>';
+                    '<div class="no-pending">Error loading approved services: ' + error.message + '. Please refresh the page.</div>';
             }
         }
 
         function displayApprovedServices(services) {
             const container = document.getElementById('approvedServicesList');
             
-            if (services.length === 0) {
+            if (!services || services.length === 0) {
                 container.innerHTML = '<div class="no-pending">No approved services found.</div>';
                 return;
             }
 
-            container.innerHTML = services.map(service => `
+            container.innerHTML = services.map(service => {
+                // Safely handle services array
+                const servicesList = Array.isArray(service.services) 
+                    ? service.services.join(', ') 
+                    : (service.services || 'Not specified');
+                
+                // Safely handle date
+                let dateStr = 'Unknown';
+                try {
+                    if (service.dateAdded) {
+                        dateStr = new Date(service.dateAdded).toLocaleDateString();
+                    }
+                } catch (e) {
+                    console.warn('Error parsing date:', e);
+                }
+                
+                return `
                 <div class="pending-service" data-service-id="${service.id}">
-                    <h3>${service.name}</h3>
+                    <h3>${service.name || 'Unnamed Service'}</h3>
                     <div class="service-details">
                         <div class="service-detail-item">
                             <strong>Email:</strong>
-                            <a href="mailto:${service.email}">${service.email}</a>
+                            <a href="mailto:${service.email || ''}">${service.email || 'Not provided'}</a>
                         </div>
                         <div class="service-detail-item">
                             <strong>Phone:</strong>
-                            <a href="tel:${service.phone}">${service.phone}</a>
+                            <a href="tel:${service.phone || ''}">${service.phone || 'Not provided'}</a>
                         </div>
                         <div class="service-detail-item">
                             <strong>Location:</strong>
-                            ${service.location}
+                            ${service.location || 'Not provided'}
                         </div>
                         <div class="service-detail-item">
                             <strong>Services:</strong>
-                            ${service.services.join(', ')}
+                            ${servicesList}
                         </div>
                         <div class="service-detail-item">
                             <strong>NDIS Registered:</strong>
-                            ${service.registered}
+                            ${service.registered || 'Not specified'}
                         </div>
                         ${service.photo ? `
                         <div class="service-detail-item" style="grid-column: 1 / -1;">
                             <strong>Photo:</strong>
-                            <img src="${service.photo.startsWith('http') ? service.photo : (service.photo.startsWith('/') ? service.photo : '/' + service.photo)}" alt="${service.name}" class="service-photo" onerror="this.style.display='none'">
+                            <img src="${service.photo.startsWith('http') ? service.photo : (service.photo.startsWith('/') ? service.photo : '/' + service.photo)}" alt="${service.name || 'Service'}" class="service-photo" onerror="this.style.display='none'">
                         </div>
                         ` : ''}
                         <div class="service-detail-item">
                             <strong>Added:</strong>
-                            ${new Date(service.dateAdded).toLocaleDateString()}
+                            ${dateStr}
                         </div>
                     </div>
                     <div class="service-actions">
                         <button class="btn-reject" onclick="deleteService(${service.id})" style="background: #dc3545;">🗑️ Delete Service</button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         async function deleteService(serviceId) {
