@@ -7,7 +7,23 @@ import { fileURLToPath } from "url";
 import multer from "multer";
 import nodemailer from "nodemailer";
 import { createClient } from '@vercel/postgres';
-import { put, del } from '@vercel/blob';
+
+// Conditionally import Vercel Blob (only if available)
+let blobPut = null;
+let blobDel = null;
+let blobAvailable = false;
+
+try {
+  const blobModule = await import('@vercel/blob');
+  blobPut = blobModule.put;
+  blobDel = blobModule.del;
+  blobAvailable = true;
+  console.log('✅ Vercel Blob Storage available');
+} catch (err) {
+  console.warn('⚠️ @vercel/blob package not installed. Blob storage will be disabled.');
+  console.warn('⚠️ To enable persistent storage, run: npm install @vercel/blob');
+  console.warn('⚠️ Images will be stored locally (ephemeral on Vercel without blob storage)');
+}
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -496,11 +512,10 @@ app.post("/api/add", upload.single("photo"), async (req, res) => {
       const filename = `service-${timestamp}-${Math.floor(Math.random() * 1000000)}${ext}`;
       
       try {
-        // Use Vercel Blob Storage if BLOB_READ_WRITE_TOKEN is available (production)
-        // Otherwise fall back to local file storage (development)
-        if (process.env.BLOB_READ_WRITE_TOKEN) {
+        // Use Vercel Blob Storage if available and BLOB_READ_WRITE_TOKEN is set
+        if (blobAvailable && process.env.BLOB_READ_WRITE_TOKEN && blobPut) {
           // Upload to Vercel Blob Storage (persistent)
-          const blob = await put(filename, req.file.buffer, {
+          const blob = await blobPut(filename, req.file.buffer, {
             access: 'public',
             contentType: req.file.mimetype || `image/${ext.slice(1)}`,
           });
@@ -901,13 +916,15 @@ app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
         // Check if it's a Vercel Blob URL
         if (service.photo.includes('blob.vercel-storage.com') || service.photo.includes('public.blob.vercel-storage.com')) {
           // Delete from Vercel Blob Storage
-          if (process.env.BLOB_READ_WRITE_TOKEN) {
+          if (blobAvailable && process.env.BLOB_READ_WRITE_TOKEN && blobDel) {
             try {
-              await del(service.photo);
+              await blobDel(service.photo);
               console.log(`✅ Deleted image from Vercel Blob Storage: ${service.photo}`);
             } catch (blobErr) {
               console.warn("Could not delete from Vercel Blob Storage:", blobErr.message);
             }
+          } else {
+            console.warn("Blob storage not available, skipping blob deletion");
           }
         } else {
           // Delete local file
