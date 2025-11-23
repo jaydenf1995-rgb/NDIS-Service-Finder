@@ -441,15 +441,20 @@ async function migrateServicesToDatabase() {
 }
 
 // Updated Admin authentication middleware - checks both username and password
+// Supports both query params (for backward compatibility) and headers (more secure)
 const authenticateAdmin = (req, res, next) => {
   try {
-    const adminUsername = req.query.username;
-    const adminPassword = req.query.password;
+    // Try headers first (more secure), fallback to query params (for backward compatibility)
+    const adminUsername = req.headers['x-admin-username'] || req.query.username;
+    const adminPassword = req.headers['x-admin-password'] || req.query.password;
     
     const expectedUsername = process.env.ADMIN_USERNAME || "admin";
     const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
     
-    console.log(`[Auth] Attempting admin login - Username: ${adminUsername}, Expected: ${expectedUsername}`);
+    // Don't log actual credentials in production
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[Auth] Attempting admin login - Username: ${adminUsername ? 'provided' : 'missing'}`);
+    }
     
     if (!adminUsername || !adminPassword) {
       console.warn("[Auth] Admin access attempted without username or password");
@@ -457,7 +462,7 @@ const authenticateAdmin = (req, res, next) => {
     }
     
     if (adminUsername !== expectedUsername) {
-      console.warn(`[Auth] Admin access attempted with incorrect username: ${adminUsername}`);
+      console.warn(`[Auth] Admin access attempted with incorrect username`);
       return res.status(401).json({ error: "Unauthorized. Admin access required." });
     }
     
@@ -466,7 +471,9 @@ const authenticateAdmin = (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized. Admin access required." });
     }
     
-    console.log("[Auth] Admin authentication successful");
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("[Auth] Admin authentication successful");
+    }
     next();
   } catch (err) {
     console.error("[Auth] Error in authenticateAdmin middleware:", err);
@@ -931,7 +938,51 @@ app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
 app.post("/api/admin/reject/:id", authenticateAdmin, async (req, res) => {
   try {
     const { reason } = req.body;
+    const serviceId = parseInt(req.params.id);
     
+    if (dbInitialized) {
+      // Check if service exists
+      const serviceResult = await db.sql`
+        SELECT * FROM services 
+        WHERE id = ${serviceId} AND approved = false AND rejected = false
+      `;
+      
+      if (serviceResult.rows.length === 0) {
+        return res.status(404).json({ error: "Service not found in pending list." });
+      }
+      
+      const service = serviceResult.rows[0];
+      
+      // Update database
+      await db.sql`
+        UPDATE services 
+        SET rejected = true, rejected_at = NOW(), rejection_reason = ${reason || ''}
+        WHERE id = ${serviceId}
+      `;
+      
+      // Send rejection email
+      if (isEmailConfigured() && service.email) {
+        try {
+          await emailTransporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: service.email,
+            subject: "Service Submission Update - NDIS Service Finder",
+            html: `
+              <h2>Service Submission Update</h2>
+              <p>Thank you for submitting your service "<strong>${service.name}</strong>" to NDIS Service Finder.</p>
+              ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+              <p>Unfortunately, we are unable to approve your service at this time. If you have questions, please feel free to contact us.</p>
+            `
+          });
+        } catch (emailErr) {
+          console.warn("Failed to send rejection email:", emailErr.message);
+        }
+      }
+      
+      return res.json({ success: true, message: "Service rejected and removed from pending list." });
+    }
+    
+    // File-based storage fallback
     let pendingServices = [];
     if (fs.existsSync(PENDING_FILE)) {
       pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
@@ -975,6 +1026,100 @@ app.post("/api/admin/reject/:id", authenticateAdmin, async (req, res) => {
 // Delete approved service (admin only)
 app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
   try {
+    const serviceId = parseInt(req.params.id);
+    
+    if (dbInitialized) {
+      // Get service first to handle image deletion
+      const serviceResult = await db.sql`
+        SELECT * FROM services WHERE id = ${serviceId}
+      `;
+      
+      if (serviceResult.rows.length === 0) {
+        return res.status(404).json({ error: "Service not found in approved list." });
+      }
+      
+      const service = serviceResult.rows[0];
+      
+      // Delete image if exists
+      if (service.photo) {
+        try {
+          if (service.photo.includes('blob.vercel-storage.com') || service.photo.includes('public.blob.vercel-storage.com')) {
+            if (blobAvailable && process.env.BLOB_READ_WRITE_TOKEN && blobDel) {
+              try {
+                await blobDel(service.photo);
+                console.log(`✅ Deleted image from Vercel Blob Storage: ${service.photo}`);
+              } catch (blobErr) {
+                console.warn("Could not delete from Vercel Blob Storage:", blobErr.message);
+              }
+            }
+          } else {
+            let imagePath;
+            if (isVercel) {
+              const filename = service.photo.replace(/^\/?uploads\//, '');
+              imagePath = path.join("/tmp", "uploads", filename);
+            } else {
+              const filename = service.photo.replace(/^uploads\//, '');
+              imagePath = path.join(__dirname, "public", "uploads", filename);
+            }
+            
+            if (fs.existsSync(imagePath)) {
+              fs.unlinkSync(imagePath);
+              console.log(`✅ Deleted local image: ${imagePath}`);
+            }
+          }
+        } catch (imageErr) {
+          console.warn("Could not delete image file:", imageErr.message);
+        }
+      }
+      
+      // Delete from database
+      await db.sql`DELETE FROM services WHERE id = ${serviceId}`;
+      
+      // Also delete associated reviews
+      try {
+        await db.sql`DELETE FROM reviews WHERE service_id = ${serviceId}`;
+        console.log(`✅ Deleted reviews for service ${serviceId}`);
+      } catch (reviewErr) {
+        console.warn("Could not delete reviews:", reviewErr.message);
+      }
+      
+      // Sync to public/services.json for frontend compatibility
+      const allServicesResult = await db.sql`
+        SELECT * FROM services WHERE approved = true ORDER BY created_at DESC
+      `;
+      
+      const publicServicesPath = path.join(__dirname, "public", "services.json");
+      try {
+        const publicDir = path.dirname(publicServicesPath);
+        if (!fs.existsSync(publicDir)) {
+          fs.mkdirSync(publicDir, { recursive: true });
+        }
+        
+        // Convert database format to JSON format
+        const servicesForJson = allServicesResult.rows.map(service => ({
+          id: service.id,
+          name: service.name,
+          email: service.email,
+          phone: service.phone,
+          location: service.location,
+          address: service.address,
+          services: service.services,
+          registered: service.registered,
+          description: service.description,
+          aboutMe: service.about_me,
+          photo: service.photo,
+          dateAdded: service.created_at
+        }));
+        
+        fs.writeFileSync(publicServicesPath, JSON.stringify(servicesForJson, null, 2));
+      } catch (err) {
+        console.warn("Could not sync to public/services.json:", err.message);
+      }
+      
+      return res.json({ success: true, message: "Service deleted successfully." });
+    }
+    
+    // File-based storage fallback
     let approvedServices = [];
     if (fs.existsSync(SERVICES_FILE)) {
       approvedServices = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));

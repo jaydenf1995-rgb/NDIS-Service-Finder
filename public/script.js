@@ -195,7 +195,7 @@ async function createServiceCard(service) {
     
     const placeholderImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjM0I4MkY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiI+TkRJUzwvdGV4dD4KPC9zdmc+';
     
-    // Get reviews from Supabase instead of localStorage
+    // Get reviews from Postgres API instead of localStorage
     let serviceReviews = [];
     let averageRating = 0;
     let reviewCount = 0;
@@ -536,12 +536,12 @@ function updateResultsCount(count) {
         resultsCount.textContent = count;
     }
 }
-// ===== SUPABASE DEBUGGING =====
+// ===== REVIEW API DEBUGGING =====
 console.log('🔧 script.js loaded successfully');
 
-// Check if Supabase is available
-function checkSupabaseStatus() {
-    console.log('🔧 Checking Supabase status...');
+// Check if Review API is available
+function checkReviewApiStatus() {
+    console.log('🔧 Checking Review API status...');
     console.log('🔧 window.supabaseClient exists:', !!window.supabaseClient);
     
     if (window.supabaseClient) {
@@ -549,7 +549,7 @@ function checkSupabaseStatus() {
         
         // Test getting reviews for a specific service
         if (window.supabaseClient.getServiceReviews) {
-            console.log('🔧 Testing Supabase connection...');
+            console.log('🔧 Testing Review API connection...');
             
             // Test with a known service ID
             const testServiceId = 1763270139958; // Jayden's service
@@ -563,16 +563,16 @@ function checkSupabaseStatus() {
                 });
         }
     } else {
-        console.error('❌ Supabase client not available!');
-        console.log('❌ Check if supabase.js is loading before script.js');
+        console.error('❌ Review API client not available!');
+        console.log('❌ Check if review-api.js is loading before script.js');
     }
 }
 
-// Wait a moment for Supabase to initialize, then check status
-setTimeout(checkSupabaseStatus, 1000);
+// Wait a moment for Review API to initialize, then check status
+setTimeout(checkReviewApiStatus, 1000);
 
 // Also check when window loads
-window.addEventListener('load', checkSupabaseStatus);
+window.addEventListener('load', checkReviewApiStatus);
 
 
 
