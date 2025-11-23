@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import multer from "multer";
 import nodemailer from "nodemailer";
 import { createClient } from '@vercel/postgres';
+import { put, del } from '@vercel/blob';
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -492,39 +493,40 @@ app.post("/api/add", upload.single("photo"), async (req, res) => {
     if (req.file) {
       const timestamp = Date.now();
       const ext = path.extname(req.file.originalname) || ".jpg";
-      const filename = `${timestamp}-${Math.floor(Math.random() * 1000000)}${ext}`;
+      const filename = `service-${timestamp}-${Math.floor(Math.random() * 1000000)}${ext}`;
       
-      if (isVercel) {
-        // On Vercel, save to /tmp/uploads (ephemeral - files won't persist)
-        // NOTE: For production on Vercel, consider using Vercel Blob Storage or AWS S3
-        // Files in /tmp are lost between deployments and serverless invocations
-        const uploadDir = path.join("/tmp", "uploads");
-        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-        const filePath = path.join(uploadDir, filename);
-        fs.writeFileSync(filePath, req.file.buffer);
-        console.log(`✅ Saved image to /tmp/uploads/${filename} (ephemeral on Vercel)`);
-        photoPath = `/uploads/${filename}`;
-        
-        // Also try to save to public/uploads if possible (may fail on Vercel as it's read-only)
-        try {
-          const publicUploadDir = path.join(__dirname, "public", "uploads");
-          if (!fs.existsSync(publicUploadDir)) {
-            fs.mkdirSync(publicUploadDir, { recursive: true });
-          }
-          const publicFilePath = path.join(publicUploadDir, filename);
-          fs.writeFileSync(publicFilePath, req.file.buffer);
-          console.log(`✅ Also saved image to public/uploads/${filename}`);
-        } catch (publicErr) {
-          console.warn("⚠️ Could not save to public/uploads (expected on Vercel):", publicErr.message);
+      try {
+        // Use Vercel Blob Storage if BLOB_READ_WRITE_TOKEN is available (production)
+        // Otherwise fall back to local file storage (development)
+        if (process.env.BLOB_READ_WRITE_TOKEN) {
+          // Upload to Vercel Blob Storage (persistent)
+          const blob = await put(filename, req.file.buffer, {
+            access: 'public',
+            contentType: req.file.mimetype || `image/${ext.slice(1)}`,
+          });
+          photoPath = blob.url;
+          console.log(`✅ Uploaded image to Vercel Blob Storage: ${blob.url}`);
+        } else if (isVercel) {
+          // Fallback: On Vercel without blob token, save to /tmp/uploads (ephemeral)
+          const uploadDir = path.join("/tmp", "uploads");
+          if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+          const filePath = path.join(uploadDir, filename);
+          fs.writeFileSync(filePath, req.file.buffer);
+          console.log(`⚠️ Saved image to /tmp/uploads/${filename} (ephemeral - set BLOB_READ_WRITE_TOKEN for persistent storage)`);
+          photoPath = `/uploads/${filename}`;
+        } else {
+          // Local development - save to public/uploads
+          const uploadDir = path.join(__dirname, "public", "uploads");
+          if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+          const filePath = path.join(uploadDir, filename);
+          fs.writeFileSync(filePath, req.file.buffer);
+          console.log(`✅ Saved image to public/uploads/${filename}`);
+          photoPath = `uploads/${filename}`;
         }
-      } else {
-        // Local development - save to public/uploads
-        const uploadDir = path.join(__dirname, "public", "uploads");
-        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-        const filePath = path.join(uploadDir, filename);
-        fs.writeFileSync(filePath, req.file.buffer);
-        console.log(`✅ Saved image to public/uploads/${filename}`);
-        photoPath = `uploads/${filename}`;
+      } catch (uploadError) {
+        console.error("Error uploading image:", uploadError);
+        // Continue without photo if upload fails
+        photoPath = "";
       }
     }
 
@@ -868,20 +870,34 @@ app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
     // Optionally delete the associated image file
     if (service.photo) {
       try {
-        let imagePath;
-        if (isVercel) {
-          // Extract filename from path (could be /uploads/filename.jpg or uploads/filename.jpg)
-          const filename = service.photo.replace(/^\/?uploads\//, '');
-          imagePath = path.join("/tmp", "uploads", filename);
+        // Check if it's a Vercel Blob URL
+        if (service.photo.includes('blob.vercel-storage.com') || service.photo.includes('public.blob.vercel-storage.com')) {
+          // Delete from Vercel Blob Storage
+          if (process.env.BLOB_READ_WRITE_TOKEN) {
+            try {
+              await del(service.photo);
+              console.log(`✅ Deleted image from Vercel Blob Storage: ${service.photo}`);
+            } catch (blobErr) {
+              console.warn("Could not delete from Vercel Blob Storage:", blobErr.message);
+            }
+          }
         } else {
-          // Extract filename from path
-          const filename = service.photo.replace(/^uploads\//, '');
-          imagePath = path.join(__dirname, "public", "uploads", filename);
-        }
-        
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-          console.log(`✅ Deleted image: ${imagePath}`);
+          // Delete local file
+          let imagePath;
+          if (isVercel) {
+            // Extract filename from path (could be /uploads/filename.jpg or uploads/filename.jpg)
+            const filename = service.photo.replace(/^\/?uploads\//, '');
+            imagePath = path.join("/tmp", "uploads", filename);
+          } else {
+            // Extract filename from path
+            const filename = service.photo.replace(/^uploads\//, '');
+            imagePath = path.join(__dirname, "public", "uploads", filename);
+          }
+          
+          if (fs.existsSync(imagePath)) {
+            fs.unlinkSync(imagePath);
+            console.log(`✅ Deleted local image: ${imagePath}`);
+          }
         }
       } catch (imageErr) {
         console.warn("Could not delete image file:", imageErr.message);
