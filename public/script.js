@@ -38,25 +38,37 @@ async function initializeApp() {
     }
 }
 
-// Load services from JSON file
+// Replace the service loading function in script.js
 async function loadServices() {
     try {
-        console.log('Fetching services.json...');
-        const response = await fetch('./services.json');
+        showLoading(true);
+        
+        // Use the API endpoint instead of static file
+        const response = await fetch('/api/search');
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error('Failed to load services');
         }
         
         const services = await response.json();
-        console.log('Successfully loaded services:', services.length);
-        return services;
+        displayServices(services);
+        allServices = services; // Make sure to store for filtering
+        
     } catch (error) {
         console.error('Error loading services:', error);
-        return getFallbackServices();
+        document.getElementById('serviceList').innerHTML = 
+            '<li class="service-card"><p>Error loading services. Please try again later.</p></li>';
+    } finally {
+        showLoading(false);
     }
 }
 
+function showLoading(show) {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = show ? 'block' : 'none';
+    }
+}
 // Fallback data in case JSON fails
 function getFallbackServices() {
     return [
@@ -538,6 +550,7 @@ setTimeout(checkSupabaseStatus, 1000);
 
 // Also check when window loads
 window.addEventListener('load', checkSupabaseStatus);
+
 
 
 
