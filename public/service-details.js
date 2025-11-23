@@ -40,14 +40,54 @@ function getServiceIdFromURL() {
 
 async function fetchServiceById(serviceId) {
     try {
-        const response = await fetch('./services.json');
+        console.log('🔧 Fetching service from API for ID:', serviceId);
+        
+        // Use the API endpoint instead of static file
+        const response = await fetch(`/api/service/${serviceId}`);
+        
         if (!response.ok) {
-            throw new Error('Failed to fetch services');
+            if (response.status === 404) {
+                console.log('🔧 Service not found via API, trying search endpoint...');
+                // Fallback to search endpoint
+                return await fetchServiceFromSearch(serviceId);
+            }
+            throw new Error(`API returned ${response.status}`);
         }
-        const services = await response.json();
-        return services.find(service => service.id == serviceId);
+        
+        const service = await response.json();
+        console.log('🔧 Service found via API:', service);
+        return service;
+        
     } catch (error) {
-        console.error('Error fetching service:', error);
+        console.error('❌ Error fetching service from API:', error);
+        // Fallback to search endpoint
+        return await fetchServiceFromSearch(serviceId);
+    }
+}
+
+// Fallback function to search through all services
+async function fetchServiceFromSearch(serviceId) {
+    try {
+        console.log('🔧 Trying search endpoint fallback...');
+        const response = await fetch('/api/search');
+        
+        if (!response.ok) {
+            throw new Error('Search endpoint failed');
+        }
+        
+        const services = await response.json();
+        const service = services.find(service => String(service.id) === String(serviceId));
+        
+        if (service) {
+            console.log('🔧 Service found via search endpoint:', service);
+        } else {
+            console.log('🔧 Service not found in search results');
+        }
+        
+        return service || null;
+        
+    } catch (error) {
+        console.error('❌ Error in search endpoint fallback:', error);
         return null;
     }
 }
@@ -370,7 +410,23 @@ function escapeHtml(text) {
 function showError() {
     const loadingMessage = document.getElementById('loadingMessage');
     const errorMessage = document.getElementById('errorMessage');
+    const serviceDetails = document.getElementById('serviceDetails');
     
     if (loadingMessage) loadingMessage.style.display = 'none';
-    if (errorMessage) errorMessage.style.display = 'block';
+    
+    // Create a better error message
+    if (errorMessage) {
+        errorMessage.innerHTML = `
+            <div class="error-message">
+                <h2>Service Not Found</h2>
+                <p>The service you're looking for may have been removed or is still pending approval.</p>
+                <a href="browse.html" class="primary-btn">← Back to All Services</a>
+            </div>
+        `;
+        errorMessage.style.display = 'block';
+    }
+    
+    if (serviceDetails) {
+        serviceDetails.style.display = 'none';
+    }
 }
