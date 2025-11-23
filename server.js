@@ -1062,7 +1062,134 @@ app.post("/api/admin/sync-services", authenticateAdmin, (req, res) => {
 });
 
 // ... KEEP ALL YOUR OTHER EXISTING ROUTES EXACTLY AS THEY ARE ...
+// ===== DEBUG ROUTES =====
+// Test database connection
+app.get("/api/debug/db-test", async (req, res) => {
+    try {
+        console.log("🔧 Testing database connection...");
+        
+        if (!db) {
+            return res.json({ 
+                status: "error", 
+                message: "Database client not initialized",
+                possibleReasons: [
+                    "Postgres environment variables not set",
+                    "Database connection failed on startup"
+                ]
+            });
+        }
+        
+        // Test simple query
+        const result = await db.sql`SELECT NOW() as current_time`;
+        console.log("✅ Database test result:", result.rows[0]);
+        
+        // Test services table
+        const servicesCount = await db.sql`SELECT COUNT(*) as count FROM services`;
+        const pendingCount = await db.sql`SELECT COUNT(*) as count FROM services WHERE approved = false AND rejected = false`;
+        const approvedCount = await db.sql`SELECT COUNT(*) as count FROM services WHERE approved = true`;
+        
+        res.json({
+            status: "success",
+            database: "Connected ✅",
+            currentTime: result.rows[0].current_time,
+            totalServices: parseInt(servicesCount.rows[0].count),
+            pendingServices: parseInt(pendingCount.rows[0].count),
+            approvedServices: parseInt(approvedCount.rows[0].count),
+            tables: {
+                services: "Exists ✅",
+                reviews: "Exists ✅"
+            }
+        });
+        
+    } catch (error) {
+        console.error("❌ Database test failed:", error);
+        res.status(500).json({ 
+            status: "error",
+            message: "Database test failed: " + error.message,
+            errorDetails: error.toString()
+        });
+    }
+});
 
+// Test specific service lookup
+app.get("/api/debug/service/:id", async (req, res) => {
+    try {
+        const serviceId = req.params.id;
+        console.log(`🔧 Debug: Looking up service ${serviceId}`);
+        
+        let service = null;
+        
+        if (db) {
+            const result = await db.sql`SELECT * FROM services WHERE id = ${parseInt(serviceId)}`;
+            service = result.rows[0];
+        }
+        
+        if (service) {
+            res.json({
+                status: "found",
+                service: service,
+                source: "database"
+            });
+        } else {
+            // Check file fallback
+            if (fs.existsSync(PENDING_FILE)) {
+                const pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
+                const fileService = pendingServices.find(s => String(s.id) === String(serviceId));
+                if (fileService) {
+                    res.json({
+                        status: "found",
+                        service: fileService,
+                        source: "pending.json file"
+                    });
+                    return;
+                }
+            }
+            
+            res.json({
+                status: "not_found",
+                message: `Service ${serviceId} not found in database or files`
+            });
+        }
+        
+    } catch (error) {
+        console.error("❌ Service debug failed:", error);
+        res.status(500).json({ error: "Debug failed: " + error.message });
+    }
+});
+
+// Test approve functionality
+app.get("/api/debug/approve-test/:id", authenticateAdmin, async (req, res) => {
+    try {
+        const serviceId = req.params.id;
+        console.log(`🔧 Testing approve for service ${serviceId}`);
+        
+        if (!db) {
+            return res.json({ error: "Database not available for testing" });
+        }
+        
+        // Check if service exists
+        const checkResult = await db.sql`SELECT * FROM services WHERE id = ${parseInt(serviceId)}`;
+        if (checkResult.rows.length === 0) {
+            return res.json({ error: `Service ${serviceId} not found in database` });
+        }
+        
+        const service = checkResult.rows[0];
+        res.json({
+            serviceExists: true,
+            service: {
+                id: service.id,
+                name: service.name,
+                approved: service.approved,
+                rejected: service.rejected
+            },
+            readyForApproval: !service.approved && !service.rejected
+        });
+        
+    } catch (error) {
+        console.error("❌ Approve test failed:", error);
+        res.status(500).json({ error: "Approve test failed: " + error.message });
+    }
+});
 // Initialize database and start server
 const PORT = process.env.PORT || 3000;
 
@@ -1094,4 +1221,5 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
 }
 
 export default app;
+
 
