@@ -32,6 +32,7 @@ const __dirname = path.dirname(__filename);
 // Initialize Vercel Postgres client with proper async initialization
 let db = null;
 let dbInitialized = false;
+let dbInitializing = false;
 
 async function initializeDatabase() {
     console.log('🔧 Starting database initialization...');
@@ -232,6 +233,36 @@ const isEmailConfigured = () => emailTransporter !== null;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Lazy database initialization middleware for Vercel serverless functions
+const ensureDatabaseInitialized = async (req, res, next) => {
+    if (!dbInitialized && !dbInitializing) {
+        dbInitializing = true;
+        try {
+            console.log('🔧 Lazy database initialization triggered by request to:', req.path);
+            const dbSuccess = await initializeDatabase();
+            if (dbSuccess) {
+                console.log('✅ Database initialized successfully (lazy)');
+                await Promise.all([
+                    initReviewsTable(),
+                    initServicesTable()
+                ]).catch(err => {
+                    console.error("Error initializing database tables:", err);
+                });
+            } else {
+                console.log('⚠️ Database initialization failed (lazy), using file-based storage');
+            }
+        } catch (err) {
+            console.error("Error in lazy database initialization:", err);
+        } finally {
+            dbInitializing = false;
+        }
+    }
+    next();
+};
+
+// Apply lazy initialization to all API routes
+app.use('/api', ensureDatabaseInitialized);
 
 // Serve uploaded images from /tmp/uploads on Vercel
 app.get("/uploads/:filename", (req, res) => {
