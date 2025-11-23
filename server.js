@@ -75,11 +75,9 @@ async function initializeDatabase() {
 }
 
 // File paths - handle both local and Vercel
-// On Vercel, process.env.VERCEL is set to "1" (string)
 const isVercel = process.env.VERCEL === "1" || process.env.VERCEL === "true" || process.env.VERCEL === true;
 const getFilePath = (filename) => {
   if (isVercel) {
-    // Ensure /tmp exists on Vercel
     const tmpDir = "/tmp";
     try {
       if (!fs.existsSync(tmpDir)) {
@@ -90,7 +88,6 @@ const getFilePath = (filename) => {
     }
     return path.join(tmpDir, filename);
   } else {
-    // For local development, use project root
     return path.join(__dirname, filename);
   }
 };
@@ -103,7 +100,6 @@ const PREMIUM_FILE = getFilePath("premium-subscriptions.json");
 const USERS_FILE = getFilePath("users.json");
 
 // Sync services.json bidirectionally on startup
-// This ensures public/services.json (used by frontend) is always in sync
 const syncServicesOnStartup = () => {
   const publicServicesPath = path.join(__dirname, "public", "services.json");
   
@@ -111,7 +107,6 @@ const syncServicesOnStartup = () => {
     let servicesFromMain = [];
     let servicesFromPublic = [];
     
-    // Read from main services file (SERVICES_FILE)
     if (fs.existsSync(SERVICES_FILE)) {
       try {
         const content = fs.readFileSync(SERVICES_FILE, "utf-8");
@@ -123,7 +118,6 @@ const syncServicesOnStartup = () => {
       }
     }
     
-    // Read from public/services.json
     if (fs.existsSync(publicServicesPath)) {
       try {
         const content = fs.readFileSync(publicServicesPath, "utf-8");
@@ -135,18 +129,14 @@ const syncServicesOnStartup = () => {
       }
     }
     
-    // Use whichever has more services (likely the most up-to-date)
-    // Or prefer SERVICES_FILE if it exists and has data
     let servicesToUse = servicesFromMain;
     if (servicesFromPublic.length > servicesFromMain.length) {
       servicesToUse = servicesFromPublic;
-      // Also update SERVICES_FILE
       if (fs.existsSync(SERVICES_FILE)) {
         fs.writeFileSync(SERVICES_FILE, JSON.stringify(servicesToUse, null, 2));
       }
     }
     
-    // Always ensure public/services.json is synced (frontend needs this)
     if (servicesToUse.length > 0) {
       const publicDir = path.dirname(publicServicesPath);
       if (!fs.existsSync(publicDir)) {
@@ -180,7 +170,6 @@ syncServicesOnStartup();
 // Ensure JSON files exist in /tmp (writable directory on Vercel)
 const ensureFilesExist = () => {
   try {
-    // Ensure /tmp directory exists
     if (isVercel) {
       const tmpDir = "/tmp";
       if (!fs.existsSync(tmpDir)) {
@@ -188,7 +177,6 @@ const ensureFilesExist = () => {
       }
     }
     
-    // Create files if they don't exist
     const files = [
       SERVICES_FILE,
       PENDING_FILE,
@@ -221,7 +209,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// Email configuration (same as before)
+// Email configuration
 const createEmailTransporter = () => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     console.warn('⚠️ Email credentials not configured. Email notifications will be disabled.');
@@ -243,25 +231,20 @@ const isEmailConfigured = () => emailTransporter !== null;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded images from /tmp/uploads on Vercel (before static middleware)
+// Serve uploaded images from /tmp/uploads on Vercel
 app.get("/uploads/:filename", (req, res) => {
   try {
     const filename = req.params.filename;
     
-    // Try multiple possible locations
     const possiblePaths = [];
     
     if (isVercel) {
-      // On Vercel, try /tmp/uploads first (ephemeral, but might exist)
       possiblePaths.push(path.join("/tmp", "uploads", filename));
-      // Also try public/uploads as fallback (if files were synced there)
       possiblePaths.push(path.join(__dirname, "public", "uploads", filename));
     } else {
-      // Local development - serve from public/uploads
       possiblePaths.push(path.join(__dirname, "public", "uploads", filename));
     }
     
-    // Try each path until we find the file
     let filePath = null;
     for (const testPath of possiblePaths) {
       if (fs.existsSync(testPath)) {
@@ -271,7 +254,6 @@ app.get("/uploads/:filename", (req, res) => {
     }
     
     if (filePath) {
-      // Set proper content type based on file extension
       const ext = path.extname(filename).toLowerCase();
       const contentTypeMap = {
         '.jpg': 'image/jpeg',
@@ -283,7 +265,7 @@ app.get("/uploads/:filename", (req, res) => {
       };
       const contentType = contentTypeMap[ext] || 'image/jpeg';
       res.setHeader('Content-Type', contentType);
-      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
       res.sendFile(filePath);
     } else {
       console.warn(`Image not found: ${filename}. Tried paths:`, possiblePaths);
@@ -300,12 +282,10 @@ app.get("/uploads/:filename", (req, res) => {
 });
 
 // Serve static files from public directory
-// This will also serve files from public/uploads if they exist there
 app.use(express.static(path.join(__dirname, "public"), {
-  // Serve uploads with proper caching
   setHeaders: (res, filePath) => {
     if (filePath.includes('uploads')) {
-      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
     }
   }
 }));
@@ -321,7 +301,7 @@ app.use((err, req, res, next) => {
 
 // Initialize database table for reviews
 async function initReviewsTable() {
-  if (!db) {
+  if (!dbInitialized) {
     console.warn('⚠️ Skipping reviews table initialization - Postgres not configured');
     return;
   }
@@ -342,9 +322,10 @@ async function initReviewsTable() {
     console.error('Error initializing reviews table:', error);
   }
 }
+
 // Initialize services table
 async function initServicesTable() {
-    if (!db) {
+    if (!dbInitialized) {
         console.warn('⚠️ Skipping services table initialization - Postgres not configured');
         return;
     }
@@ -458,10 +439,10 @@ async function migrateServicesToDatabase() {
         console.error('Error migrating services to database:', error);
     }
 }
+
 // Updated Admin authentication middleware - checks both username and password
 const authenticateAdmin = (req, res, next) => {
   try {
-    // Safely extract username and password from query parameters
     const adminUsername = req.query.username;
     const adminPassword = req.query.password;
     
@@ -485,31 +466,77 @@ const authenticateAdmin = (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized. Admin access required." });
     }
     
-    // Both username and password match, proceed
     console.log("[Auth] Admin authentication successful");
     next();
   } catch (err) {
     console.error("[Auth] Error in authenticateAdmin middleware:", err);
-    console.error("[Auth] Error message:", err.message);
-    console.error("[Auth] Error stack:", err.stack);
     return res.status(500).json({ error: "Authentication error: " + (err.message || "Unknown error") });
   }
 };
 
-// Routes (keep all your existing routes, but update review-related ones)
-// Simple debug route to test server
+// ===== DEBUG ROUTES =====
 app.get("/api/debug/simple", (req, res) => {
+    console.log("🔧 Debug route called - dbInitialized:", dbInitialized);
     res.json({
         status: "server_responding",
         timestamp: new Date().toISOString(),
         dbInitialized: dbInitialized,
-        hasPostgresVars: !!(process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL)
+        hasPostgresVars: !!(process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL),
+        environment: process.env.NODE_ENV || 'development'
     });
 });
-// Get reviews for a service (UPDATED for Vercel Postgres)
+
+app.get("/api/debug/db-test", async (req, res) => {
+    try {
+        console.log("🔧 Testing database connection...");
+        
+        if (!dbInitialized) {
+            return res.json({ 
+                status: "error", 
+                message: "Database client not initialized",
+                possibleReasons: [
+                    "Postgres environment variables not set",
+                    "Database connection failed on startup"
+                ]
+            });
+        }
+        
+        const result = await db.sql`SELECT NOW() as current_time`;
+        console.log("✅ Database test result:", result.rows[0]);
+        
+        const servicesCount = await db.sql`SELECT COUNT(*) as count FROM services`;
+        const pendingCount = await db.sql`SELECT COUNT(*) as count FROM services WHERE approved = false AND rejected = false`;
+        const approvedCount = await db.sql`SELECT COUNT(*) as count FROM services WHERE approved = true`;
+        
+        res.json({
+            status: "success",
+            database: "Connected ✅",
+            currentTime: result.rows[0].current_time,
+            totalServices: parseInt(servicesCount.rows[0].count),
+            pendingServices: parseInt(pendingCount.rows[0].count),
+            approvedServices: parseInt(approvedCount.rows[0].count),
+            tables: {
+                services: "Exists ✅",
+                reviews: "Exists ✅"
+            }
+        });
+        
+    } catch (error) {
+        console.error("❌ Database test failed:", error);
+        res.status(500).json({ 
+            status: "error",
+            message: "Database test failed: " + error.message,
+            errorDetails: error.toString()
+        });
+    }
+});
+
+// ===== MAIN ROUTES =====
+
+// Get reviews for a service
 app.get("/api/service/:id/reviews", async (req, res) => {
-  if (!db) {
-    return res.json([]); // Return empty array if Postgres not configured
+  if (!dbInitialized) {
+    return res.json([]);
   }
   try {
     const result = await db.sql`
@@ -524,9 +551,9 @@ app.get("/api/service/:id/reviews", async (req, res) => {
   }
 });
 
-// Add a review (UPDATED for Vercel Postgres)
+// Add a review
 app.post("/api/service/:id/reviews", async (req, res) => {
-  if (!db) {
+  if (!dbInitialized) {
     return res.status(503).json({ error: "Reviews feature is not available. Postgres not configured." });
   }
   try {
@@ -569,13 +596,12 @@ app.get("/services.json", (req, res) => {
   }
 });
 
-// Search approved services (UPDATED for Postgres)
+// Search approved services
 app.get("/api/search", async (req, res) => {
     try {
         let services = [];
         
         if (dbInitialized) {
-            // Get approved services from database
             const result = await db.sql`
                 SELECT * FROM services 
                 WHERE approved = true 
@@ -583,7 +609,6 @@ app.get("/api/search", async (req, res) => {
             `;
             services = result.rows;
         } else {
-            // Fallback to file-based storage
             const servicesData = fs.readFileSync(SERVICES_FILE, "utf-8");
             services = JSON.parse(servicesData);
         }
@@ -609,15 +634,14 @@ app.get("/api/search", async (req, res) => {
 
             return {
                 ...service,
-                aboutMe: service.about_me, // Map database field to frontend field
+                aboutMe: service.about_me,
                 dateAdded: service.created_at,
                 averageRating: Math.round(averageRating * 10) / 10,
                 reviewCount: reviewCount,
-                isFeatured: false // You can add premium features later
+                isFeatured: false
             };
         }));
 
-        // Sort: you can add premium sorting logic here later
         servicesWithRatings.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
         const q = (req.query.q || "").toLowerCase();
@@ -638,7 +662,7 @@ app.get("/api/search", async (req, res) => {
     }
 });
 
-// Get single service with reviews (UPDATED for Postgres)
+// Get single service with reviews
 app.get("/api/service/:id", async (req, res) => {
     try {
         let service = null;
@@ -649,7 +673,6 @@ app.get("/api/service/:id", async (req, res) => {
             `;
             service = result.rows[0];
         } else {
-            // Fallback to file-based storage
             const services = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
             service = services.find((s) => String(s.id) === req.params.id);
         }
@@ -675,7 +698,7 @@ app.get("/api/service/:id", async (req, res) => {
 
         res.json({
             ...service,
-            aboutMe: service.about_me, // Map database field to frontend field
+            aboutMe: service.about_me,
             dateAdded: service.created_at,
             reviews: serviceReviews,
             averageRating: Math.round(averageRating * 10) / 10,
@@ -688,12 +711,11 @@ app.get("/api/service/:id", async (req, res) => {
     }
 });
 
-// Add new service (to database) - UPDATED for Postgres
+// Add new service
 app.post("/api/add", upload.single("photo"), async (req, res) => {
     try {
         const { name, email, phone, location, address, services, registered, description, aboutMe } = req.body;
         
-        // Validate required fields
         if (!name || !email || !phone || !location || !address || !registered || !description) {
             return res.status(400).json({
                 success: false,
@@ -701,7 +723,6 @@ app.post("/api/add", upload.single("photo"), async (req, res) => {
             });
         }
 
-        // Parse services array
         let servicesArray = [];
         if (Array.isArray(services)) {
             servicesArray = services;
@@ -716,16 +737,42 @@ app.post("/api/add", upload.single("photo"), async (req, res) => {
             });
         }
 
-        // Handle photo upload (keep your existing photo code)
         let photoPath = "";
         if (req.file) {
-            // ... (keep your existing photo upload code)
+            const timestamp = Date.now();
+            const ext = path.extname(req.file.originalname) || ".jpg";
+            const filename = `service-${timestamp}-${Math.floor(Math.random() * 1000000)}${ext}`;
+            
+            try {
+                if (blobAvailable && process.env.BLOB_READ_WRITE_TOKEN && blobPut) {
+                    const blob = await blobPut(filename, req.file.buffer, {
+                        access: 'public',
+                        contentType: req.file.mimetype || `image/${ext.slice(1)}`,
+                    });
+                    photoPath = blob.url;
+                    console.log(`✅ Uploaded image to Vercel Blob Storage: ${blob.url}`);
+                } else if (isVercel) {
+                    const uploadDir = path.join("/tmp", "uploads");
+                    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+                    const filePath = path.join(uploadDir, filename);
+                    fs.writeFileSync(filePath, req.file.buffer);
+                    photoPath = `/uploads/${filename}`;
+                } else {
+                    const uploadDir = path.join(__dirname, "public", "uploads");
+                    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+                    const filePath = path.join(uploadDir, filename);
+                    fs.writeFileSync(filePath, req.file.buffer);
+                    photoPath = `uploads/${filename}`;
+                }
+            } catch (uploadError) {
+                console.error("Error uploading image:", uploadError);
+                photoPath = "";
+            }
         }
 
         const serviceId = Date.now();
 
         if (dbInitialized) {
-            // Save to database
             await db.sql`
                 INSERT INTO services (
                     id, name, email, phone, location, address, services, 
@@ -745,7 +792,6 @@ app.post("/api/add", upload.single("photo"), async (req, res) => {
                 )
             `;
         } else {
-            // Fallback to file-based storage
             let pendingServices = [];
             if (fs.existsSync(PENDING_FILE)) {
                 pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
@@ -771,8 +817,28 @@ app.post("/api/add", upload.single("photo"), async (req, res) => {
             fs.writeFileSync(PENDING_FILE, JSON.stringify(pendingServices, null, 2));
         }
 
-        // Send email notification if configured
-        // ... (keep your existing email code)
+        if (isEmailConfigured() && process.env.ADMIN_EMAIL) {
+            try {
+                await emailTransporter.sendMail({
+                    from: process.env.EMAIL_USER,
+                    to: process.env.ADMIN_EMAIL,
+                    subject: `New Service Submission: ${name}`,
+                    html: `
+                        <h2>New Service Submission</h2>
+                        <p><strong>Name:</strong> ${name}</p>
+                        <p><strong>Email:</strong> ${email}</p>
+                        <p><strong>Phone:</strong> ${phone}</p>
+                        <p><strong>Location:</strong> ${location}</p>
+                        <p><strong>Services:</strong> ${servicesArray.join(", ")}</p>
+                        <p><strong>NDIS Registered:</strong> ${registered}</p>
+                        <p><strong>Description:</strong> ${description}</p>
+                        <p>Please review and approve this service in the admin panel.</p>
+                    `
+                });
+            } catch (emailErr) {
+                console.warn("Failed to send email notification:", emailErr.message);
+            }
+        }
 
         res.json({
             success: true,
@@ -787,27 +853,7 @@ app.post("/api/add", upload.single("photo"), async (req, res) => {
     }
 });
 
-// User Registration - FIXED VERSION
-app.post("/api/register", (req, res) => {
-  try {
-    // ... keep your existing registration code exactly as is ...
-  } catch (err) {
-    console.error("Registration error:", err);
-    res.status(500).json({ error: "Failed to create account: " + err.message });
-  }
-});
-
-// User Login - FIXED VERSION
-app.post("/api/login", (req, res) => {
-  try {
-    // ... keep your existing login code exactly as is ...
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ error: "Failed to login: " + err.message });
-  }
-});
-
-// Get pending services (admin only) - UPDATED for Postgres
+// Get pending services (admin only)
 app.get("/api/admin/pending", authenticateAdmin, async (req, res) => {
     try {
         let pendingServices = [];
@@ -824,7 +870,6 @@ app.get("/api/admin/pending", authenticateAdmin, async (req, res) => {
                 dateAdded: service.created_at
             }));
         } else {
-            // Fallback to file-based storage
             if (fs.existsSync(PENDING_FILE)) {
                 pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
             }
@@ -837,18 +882,16 @@ app.get("/api/admin/pending", authenticateAdmin, async (req, res) => {
     }
 });
 
-// Approve service (admin only) - UPDATED for Postgres
+// Approve service (admin only)
 app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
     try {
         if (dbInitialized) {
-            // Update service in database
             await db.sql`
                 UPDATE services 
                 SET approved = true, approved_at = NOW() 
                 WHERE id = ${parseInt(req.params.id)}
             `;
         } else {
-            // Fallback to file-based storage (your existing code)
             let pendingServices = [];
             if (fs.existsSync(PENDING_FILE)) {
                 pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
@@ -873,13 +916,9 @@ app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
             pendingServices.splice(serviceIndex, 1);
             fs.writeFileSync(PENDING_FILE, JSON.stringify(pendingServices, null, 2));
 
-            // Sync to public/services.json
             const publicServicesPath = path.join(__dirname, "public", "services.json");
             fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
         }
-
-        // Send approval email if configured
-        // ... (keep your existing email code)
 
         res.json({ success: true, message: "Service approved and added to live listings." });
     } catch (err) {
@@ -893,13 +932,11 @@ app.post("/api/admin/reject/:id", authenticateAdmin, async (req, res) => {
   try {
     const { reason } = req.body;
     
-    // Read pending services
     let pendingServices = [];
     if (fs.existsSync(PENDING_FILE)) {
       pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
     }
 
-    // Find the service to reject
     const serviceIndex = pendingServices.findIndex(s => String(s.id) === String(req.params.id));
     if (serviceIndex === -1) {
       return res.status(404).json({ error: "Service not found in pending list." });
@@ -907,11 +944,9 @@ app.post("/api/admin/reject/:id", authenticateAdmin, async (req, res) => {
 
     const service = pendingServices[serviceIndex];
 
-    // Remove from pending
     pendingServices.splice(serviceIndex, 1);
     fs.writeFileSync(PENDING_FILE, JSON.stringify(pendingServices, null, 2));
 
-    // Send rejection email if configured
     if (isEmailConfigured() && service.email) {
       try {
         await emailTransporter.sendMail({
@@ -940,13 +975,11 @@ app.post("/api/admin/reject/:id", authenticateAdmin, async (req, res) => {
 // Delete approved service (admin only)
 app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
   try {
-    // Read approved services
     let approvedServices = [];
     if (fs.existsSync(SERVICES_FILE)) {
       approvedServices = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
     }
 
-    // Find the service to delete
     const serviceIndex = approvedServices.findIndex(s => String(s.id) === String(req.params.id));
     if (serviceIndex === -1) {
       return res.status(404).json({ error: "Service not found in approved list." });
@@ -954,12 +987,9 @@ app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
 
     const service = approvedServices[serviceIndex];
 
-    // Optionally delete the associated image file
     if (service.photo) {
       try {
-        // Check if it's a Vercel Blob URL
         if (service.photo.includes('blob.vercel-storage.com') || service.photo.includes('public.blob.vercel-storage.com')) {
-          // Delete from Vercel Blob Storage
           if (blobAvailable && process.env.BLOB_READ_WRITE_TOKEN && blobDel) {
             try {
               await blobDel(service.photo);
@@ -967,18 +997,13 @@ app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
             } catch (blobErr) {
               console.warn("Could not delete from Vercel Blob Storage:", blobErr.message);
             }
-          } else {
-            console.warn("Blob storage not available, skipping blob deletion");
           }
         } else {
-          // Delete local file
           let imagePath;
           if (isVercel) {
-            // Extract filename from path (could be /uploads/filename.jpg or uploads/filename.jpg)
             const filename = service.photo.replace(/^\/?uploads\//, '');
             imagePath = path.join("/tmp", "uploads", filename);
           } else {
-            // Extract filename from path
             const filename = service.photo.replace(/^uploads\//, '');
             imagePath = path.join(__dirname, "public", "uploads", filename);
           }
@@ -990,40 +1015,22 @@ app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
         }
       } catch (imageErr) {
         console.warn("Could not delete image file:", imageErr.message);
-        // Continue with service deletion even if image deletion fails
       }
     }
 
-    // Remove from approved services
     approvedServices.splice(serviceIndex, 1);
     fs.writeFileSync(SERVICES_FILE, JSON.stringify(approvedServices, null, 2));
-    console.log(`✅ Removed service from approved list. ${approvedServices.length} services remaining.`);
 
-    // ALWAYS sync to public/services.json - this is critical for frontend to display services
     const publicServicesPath = path.join(__dirname, "public", "services.json");
     try {
-      // Ensure the directory exists
       const publicDir = path.dirname(publicServicesPath);
       if (!fs.existsSync(publicDir)) {
         fs.mkdirSync(publicDir, { recursive: true });
       }
       
       fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
-      console.log(`✅ Synced ${approvedServices.length} services to public/services.json after deletion`);
     } catch (err) {
       console.error("❌ CRITICAL: Could not sync to public/services.json:", err.message);
-      console.error("Error details:", err);
-    }
-    
-    // Also sync to root services.json if it exists (for backup) - only on local dev
-    if (!isVercel) {
-      const rootServicesPath = path.join(__dirname, "services.json");
-      try {
-        fs.writeFileSync(rootServicesPath, JSON.stringify(approvedServices, null, 2));
-        console.log(`✅ Synced ${approvedServices.length} services to root services.json`);
-      } catch (err) {
-        console.warn("Could not sync to root services.json:", err.message);
-      }
     }
 
     res.json({ success: true, message: "Service deleted successfully." });
@@ -1033,211 +1040,14 @@ app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
   }
 });
 
-// Get all approved services (admin only) - for admin panel to show existing listings
-app.get("/api/admin/services", authenticateAdmin, (req, res) => {
-  try {
-    console.log(`[Admin] Loading approved services from: ${SERVICES_FILE}`);
-    let approvedServices = [];
-    
-    if (fs.existsSync(SERVICES_FILE)) {
-      try {
-        const fileContent = fs.readFileSync(SERVICES_FILE, "utf-8");
-        if (fileContent && fileContent.trim()) {
-          approvedServices = JSON.parse(fileContent);
-          // Ensure it's an array
-          if (!Array.isArray(approvedServices)) {
-            console.warn("[Admin] services.json is not an array, resetting to empty array");
-            approvedServices = [];
-          }
-        }
-        console.log(`[Admin] Loaded ${approvedServices.length} approved services`);
-      } catch (parseError) {
-        console.error("[Admin] Error parsing services.json:", parseError);
-        console.error("[Admin] Parse error stack:", parseError.stack);
-        approvedServices = [];
-      }
-    } else {
-      console.log(`[Admin] Services file does not exist: ${SERVICES_FILE}`);
-    }
-    
-    res.json(approvedServices);
-  } catch (err) {
-    console.error("[Admin] Unexpected error loading approved services:", err);
-    console.error("[Admin] Error message:", err.message);
-    console.error("[Admin] Error stack:", err.stack);
-    // Return empty array instead of 500 error
-    res.status(200).json([]);
-  }
-});
-
-// Manual sync endpoint (admin only) - force sync services to public/services.json
-app.post("/api/admin/sync-services", authenticateAdmin, (req, res) => {
-  try {
-    let approvedServices = [];
-    if (fs.existsSync(SERVICES_FILE)) {
-      approvedServices = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
-    }
-    
-    // Sync to public/services.json
-    const publicServicesPath = path.join(__dirname, "public", "services.json");
-    const publicDir = path.dirname(publicServicesPath);
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir, { recursive: true });
-    }
-    
-    fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
-    console.log(`✅ Manual sync: Synced ${approvedServices.length} services to public/services.json`);
-    
-    res.json({ 
-      success: true, 
-      message: `Successfully synced ${approvedServices.length} services to public/services.json`,
-      serviceCount: approvedServices.length
-    });
-  } catch (err) {
-    console.error("Error syncing services:", err);
-    res.status(500).json({ error: "Failed to sync services: " + err.message });
-  }
-});
-
-// ... KEEP ALL YOUR OTHER EXISTING ROUTES EXACTLY AS THEY ARE ...
-// ===== DEBUG ROUTES =====
-// Test database connection
-app.get("/api/debug/db-test", async (req, res) => {
-    try {
-        console.log("🔧 Testing database connection...");
-        
-        if (!db) {
-            return res.json({ 
-                status: "error", 
-                message: "Database client not initialized",
-                possibleReasons: [
-                    "Postgres environment variables not set",
-                    "Database connection failed on startup"
-                ]
-            });
-        }
-        
-        // Test simple query
-        const result = await db.sql`SELECT NOW() as current_time`;
-        console.log("✅ Database test result:", result.rows[0]);
-        
-        // Test services table
-        const servicesCount = await db.sql`SELECT COUNT(*) as count FROM services`;
-        const pendingCount = await db.sql`SELECT COUNT(*) as count FROM services WHERE approved = false AND rejected = false`;
-        const approvedCount = await db.sql`SELECT COUNT(*) as count FROM services WHERE approved = true`;
-        
-        res.json({
-            status: "success",
-            database: "Connected ✅",
-            currentTime: result.rows[0].current_time,
-            totalServices: parseInt(servicesCount.rows[0].count),
-            pendingServices: parseInt(pendingCount.rows[0].count),
-            approvedServices: parseInt(approvedCount.rows[0].count),
-            tables: {
-                services: "Exists ✅",
-                reviews: "Exists ✅"
-            }
-        });
-        
-    } catch (error) {
-        console.error("❌ Database test failed:", error);
-        res.status(500).json({ 
-            status: "error",
-            message: "Database test failed: " + error.message,
-            errorDetails: error.toString()
-        });
-    }
-});
-
-// Test specific service lookup
-app.get("/api/debug/service/:id", async (req, res) => {
-    try {
-        const serviceId = req.params.id;
-        console.log(`🔧 Debug: Looking up service ${serviceId}`);
-        
-        let service = null;
-        
-        if (dbInitialized) {
-            const result = await db.sql`SELECT * FROM services WHERE id = ${parseInt(serviceId)}`;
-            service = result.rows[0];
-        }
-        
-        if (service) {
-            res.json({
-                status: "found",
-                service: service,
-                source: "database"
-            });
-        } else {
-            // Check file fallback
-            if (fs.existsSync(PENDING_FILE)) {
-                const pendingServices = JSON.parse(fs.readFileSync(PENDING_FILE, "utf-8"));
-                const fileService = pendingServices.find(s => String(s.id) === String(serviceId));
-                if (fileService) {
-                    res.json({
-                        status: "found",
-                        service: fileService,
-                        source: "pending.json file"
-                    });
-                    return;
-                }
-            }
-            
-            res.json({
-                status: "not_found",
-                message: `Service ${serviceId} not found in database or files`
-            });
-        }
-        
-    } catch (error) {
-        console.error("❌ Service debug failed:", error);
-        res.status(500).json({ error: "Debug failed: " + error.message });
-    }
-});
-
-// Test approve functionality
-app.get("/api/debug/approve-test/:id", authenticateAdmin, async (req, res) => {
-    try {
-        const serviceId = req.params.id;
-        console.log(`🔧 Testing approve for service ${serviceId}`);
-        
-        if (!db) {
-            return res.json({ error: "Database not available for testing" });
-        }
-        
-        // Check if service exists
-        const checkResult = await db.sql`SELECT * FROM services WHERE id = ${parseInt(serviceId)}`;
-        if (checkResult.rows.length === 0) {
-            return res.json({ error: `Service ${serviceId} not found in database` });
-        }
-        
-        const service = checkResult.rows[0];
-        res.json({
-            serviceExists: true,
-            service: {
-                id: service.id,
-                name: service.name,
-                approved: service.approved,
-                rejected: service.rejected
-            },
-            readyForApproval: !service.approved && !service.rejected
-        });
-        
-    } catch (error) {
-        console.error("❌ Approve test failed:", error);
-        res.status(500).json({ error: "Approve test failed: " + error.message });
-    }
-});
 // Initialize database and start server
 const PORT = process.env.PORT || 3000;
 
 async function startServer() {
-    // Initialize database first
     const dbSuccess = await initializeDatabase();
     
     if (dbSuccess) {
         console.log('✅ Database initialized successfully');
-        // Initialize tables
         await Promise.all([
             initReviewsTable(),
             initServicesTable()
@@ -1248,14 +1058,12 @@ async function startServer() {
         console.log('⚠️ Using file-based storage (database not available)');
     }
 
-    // For Vercel deployment, export the app
     const isVercelEnv = process.env.VERCEL === "1" || process.env.VERCEL === "true" || process.env.VERCEL === true;
     
     if (isVercelEnv) {
         console.log('✅ Server ready for Vercel deployment');
         console.log(`🗄️ Database: ${dbSuccess ? '✅ Postgres Enabled' : '⚠️ File-based Storage'}`);
     } else {
-        // For local development, start the server
         app.listen(PORT, () => {
             console.log(`✅ Server running at http://localhost:${PORT}`);
             console.log(`📧 Email notifications: ${isEmailConfigured() ? '✅ Enabled' : '❌ Disabled'}`);
@@ -1270,5 +1078,3 @@ startServer().catch(err => {
 });
 
 export default app;
-
-
