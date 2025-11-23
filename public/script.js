@@ -7,6 +7,14 @@ let currentFilters = {
     sortBy: 'newest'
 };
 
+// ADD showLoading function here - at the top
+function showLoading(show) {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = show ? 'block' : 'none';
+    }
+}
+
 // DOM Content Loaded
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('DOM loaded - initializing app...');
@@ -48,7 +56,7 @@ async function initializeApp() {
 // FIXED service loading function
 async function loadServices() {
     try {
-        showLoading(true);
+        showLoading(true); // This will now work
         
         // Use the API endpoint instead of static file
         const response = await fetch('/api/search');
@@ -71,17 +79,19 @@ async function loadServices() {
         }
         
         console.log(`✅ Loaded ${services.length} services from API`);
-        return services; // ← THIS WAS MISSING!
+        return services;
         
     } catch (error) {
         console.error('Error loading services:', error);
         document.getElementById('serviceList').innerHTML = 
             '<li class="service-card"><p>Error loading services. Please try again later.</p></li>';
-        return []; // Return empty array on error
+        return [];
     } finally {
-        showLoading(false);
+        showLoading(false); // This will now work too
     }
 }
+
+// ... rest of your script.js remains exactly the same ...
 // Fallback data in case JSON fails
 function getFallbackServices() {
     return [
@@ -563,6 +573,7 @@ setTimeout(checkSupabaseStatus, 1000);
 
 // Also check when window loads
 window.addEventListener('load', checkSupabaseStatus);
+
 
 
 
