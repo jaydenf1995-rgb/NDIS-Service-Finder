@@ -566,14 +566,23 @@ app.post("/api/service/:id/reviews", async (req, res) => {
     return res.status(503).json({ error: "Reviews feature is not available. Postgres not configured." });
   }
   try {
-    const services = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
-    const service = services.find((s) => String(s.id) === req.params.id);
+    const serviceId = parseInt(req.params.id);
+    let serviceName = '';
     
-    if (!service) return res.status(404).json({ error: "Service not found" });
+    // Get service name from database
+    const serviceResult = await db.sql`
+      SELECT name FROM services WHERE id = ${serviceId}
+    `;
+    
+    if (serviceResult.rows.length === 0) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+    
+    serviceName = serviceResult.rows[0].name;
 
     const result = await db.sql`
       INSERT INTO reviews (provider_name, rating, comment, author, service_id)
-      VALUES (${service.name}, ${req.body.rating}, ${req.body.comment}, ${req.body.author || "Anonymous"}, ${parseInt(req.params.id)})
+      VALUES (${serviceName}, ${req.body.rating}, ${req.body.comment}, ${req.body.author || "Anonymous"}, ${serviceId})
       RETURNING *
     `;
 
