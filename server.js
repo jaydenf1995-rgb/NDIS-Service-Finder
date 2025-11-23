@@ -55,20 +55,66 @@ const SUBSCRIBERS_FILE = getFilePath("subscribers.json");
 const PREMIUM_FILE = getFilePath("premium-subscriptions.json");
 const USERS_FILE = getFilePath("users.json");
 
-// For local dev, also sync with public/services.json on startup
-if (!isVercel) {
+// Sync services.json bidirectionally on startup
+// This ensures public/services.json (used by frontend) is always in sync
+const syncServicesOnStartup = () => {
   const publicServicesPath = path.join(__dirname, "public", "services.json");
-  if (fs.existsSync(publicServicesPath)) {
-    try {
-      const publicServices = fs.readFileSync(publicServicesPath, "utf-8");
-      fs.writeFileSync(SERVICES_FILE, publicServices);
-      console.log("✅ Synced services.json from public folder");
-    } catch (err) {
-      console.warn("⚠️ Could not sync services.json:", err.message);
-    }
-  }
   
-  // Also sync pending.json if it exists in root
+  try {
+    let servicesFromMain = [];
+    let servicesFromPublic = [];
+    
+    // Read from main services file (SERVICES_FILE)
+    if (fs.existsSync(SERVICES_FILE)) {
+      try {
+        const content = fs.readFileSync(SERVICES_FILE, "utf-8");
+        if (content && content.trim()) {
+          servicesFromMain = JSON.parse(content);
+        }
+      } catch (err) {
+        console.warn("⚠️ Could not read main services file:", err.message);
+      }
+    }
+    
+    // Read from public/services.json
+    if (fs.existsSync(publicServicesPath)) {
+      try {
+        const content = fs.readFileSync(publicServicesPath, "utf-8");
+        if (content && content.trim()) {
+          servicesFromPublic = JSON.parse(content);
+        }
+      } catch (err) {
+        console.warn("⚠️ Could not read public services file:", err.message);
+      }
+    }
+    
+    // Use whichever has more services (likely the most up-to-date)
+    // Or prefer SERVICES_FILE if it exists and has data
+    let servicesToUse = servicesFromMain;
+    if (servicesFromPublic.length > servicesFromMain.length) {
+      servicesToUse = servicesFromPublic;
+      // Also update SERVICES_FILE
+      if (fs.existsSync(SERVICES_FILE)) {
+        fs.writeFileSync(SERVICES_FILE, JSON.stringify(servicesToUse, null, 2));
+      }
+    }
+    
+    // Always ensure public/services.json is synced (frontend needs this)
+    if (servicesToUse.length > 0) {
+      const publicDir = path.dirname(publicServicesPath);
+      if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true });
+      }
+      fs.writeFileSync(publicServicesPath, JSON.stringify(servicesToUse, null, 2));
+      console.log(`✅ Synced ${servicesToUse.length} services to public/services.json on startup`);
+    }
+  } catch (err) {
+    console.warn("⚠️ Error syncing services on startup:", err.message);
+  }
+};
+
+// For local dev, also sync pending.json if it exists in root
+if (!isVercel) {
   const rootPendingPath = path.join(__dirname, "pending.json");
   if (fs.existsSync(rootPendingPath)) {
     try {
@@ -80,6 +126,9 @@ if (!isVercel) {
     }
   }
 }
+
+// Run sync on startup
+syncServicesOnStartup();
 
 // Ensure JSON files exist in /tmp (writable directory on Vercel)
 const ensureFilesExist = () => {
@@ -632,21 +681,31 @@ app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
 
     // Save approved services
     fs.writeFileSync(SERVICES_FILE, JSON.stringify(approvedServices, null, 2));
+    console.log(`✅ Saved ${approvedServices.length} services to ${SERVICES_FILE}`);
 
     // Remove from pending
     pendingServices.splice(serviceIndex, 1);
     fs.writeFileSync(PENDING_FILE, JSON.stringify(pendingServices, null, 2));
+    console.log(`✅ Removed service from pending. ${pendingServices.length} services remaining in pending.`);
 
-    // Sync to public/services.json for both local dev and Vercel (for static file serving)
+    // ALWAYS sync to public/services.json - this is critical for frontend to display services
     const publicServicesPath = path.join(__dirname, "public", "services.json");
     try {
+      // Ensure the directory exists
+      const publicDir = path.dirname(publicServicesPath);
+      if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true });
+      }
+      
       fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
       console.log(`✅ Synced ${approvedServices.length} services to public/services.json`);
     } catch (err) {
-      console.warn("Could not sync to public/services.json:", err.message);
+      console.error("❌ CRITICAL: Could not sync to public/services.json:", err.message);
+      console.error("Error details:", err);
+      // Don't throw - we still want to complete the approval, but log the error
     }
     
-    // Also sync to root services.json if it exists (for backup)
+    // Also sync to root services.json if it exists (for backup) - only on local dev
     if (!isVercel) {
       const rootServicesPath = path.join(__dirname, "services.json");
       try {
@@ -776,21 +835,30 @@ app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
     // Remove from approved services
     approvedServices.splice(serviceIndex, 1);
     fs.writeFileSync(SERVICES_FILE, JSON.stringify(approvedServices, null, 2));
+    console.log(`✅ Removed service from approved list. ${approvedServices.length} services remaining.`);
 
-    // Sync to public/services.json
+    // ALWAYS sync to public/services.json - this is critical for frontend to display services
     const publicServicesPath = path.join(__dirname, "public", "services.json");
     try {
+      // Ensure the directory exists
+      const publicDir = path.dirname(publicServicesPath);
+      if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true });
+      }
+      
       fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
       console.log(`✅ Synced ${approvedServices.length} services to public/services.json after deletion`);
     } catch (err) {
-      console.warn("Could not sync to public/services.json:", err.message);
+      console.error("❌ CRITICAL: Could not sync to public/services.json:", err.message);
+      console.error("Error details:", err);
     }
     
-    // Also sync to root services.json if it exists (for backup)
+    // Also sync to root services.json if it exists (for backup) - only on local dev
     if (!isVercel) {
       const rootServicesPath = path.join(__dirname, "services.json");
       try {
         fs.writeFileSync(rootServicesPath, JSON.stringify(approvedServices, null, 2));
+        console.log(`✅ Synced ${approvedServices.length} services to root services.json`);
       } catch (err) {
         console.warn("Could not sync to root services.json:", err.message);
       }
@@ -814,6 +882,35 @@ app.get("/api/admin/services", authenticateAdmin, (req, res) => {
   } catch (err) {
     console.error("Error loading approved services:", err);
     res.status(500).json({ error: "Failed to load services: " + err.message });
+  }
+});
+
+// Manual sync endpoint (admin only) - force sync services to public/services.json
+app.post("/api/admin/sync-services", authenticateAdmin, (req, res) => {
+  try {
+    let approvedServices = [];
+    if (fs.existsSync(SERVICES_FILE)) {
+      approvedServices = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
+    }
+    
+    // Sync to public/services.json
+    const publicServicesPath = path.join(__dirname, "public", "services.json");
+    const publicDir = path.dirname(publicServicesPath);
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+    
+    fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
+    console.log(`✅ Manual sync: Synced ${approvedServices.length} services to public/services.json`);
+    
+    res.json({ 
+      success: true, 
+      message: `Successfully synced ${approvedServices.length} services to public/services.json`,
+      serviceCount: approvedServices.length
+    });
+  } catch (err) {
+    console.error("Error syncing services:", err);
+    res.status(500).json({ error: "Failed to sync services: " + err.message });
   }
 });
 
