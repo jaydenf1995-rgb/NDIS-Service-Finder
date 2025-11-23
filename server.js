@@ -137,13 +137,15 @@ const syncServicesOnStartup = () => {
       }
     }
     
-    if (servicesToUse.length > 0) {
+    if (servicesToUse.length > 0 && !isVercel) {
       const publicDir = path.dirname(publicServicesPath);
       if (!fs.existsSync(publicDir)) {
         fs.mkdirSync(publicDir, { recursive: true });
       }
       fs.writeFileSync(publicServicesPath, JSON.stringify(servicesToUse, null, 2));
       console.log(`✅ Synced ${servicesToUse.length} services to public/services.json on startup`);
+    } else if (isVercel) {
+      console.log('ℹ️ Skipping public/services.json sync on startup (Vercel - read-only filesystem)');
     }
   } catch (err) {
     console.warn("⚠️ Error syncing services on startup:", err.message);
@@ -950,38 +952,42 @@ app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
                 WHERE id = ${serviceId}
             `;
             
-            // Sync to public/services.json for frontend compatibility
-            const allServicesResult = await db.sql`
-                SELECT * FROM services WHERE approved = true ORDER BY created_at DESC
-            `;
-            
-            const publicServicesPath = path.join(__dirname, "public", "services.json");
-            try {
-                const publicDir = path.dirname(publicServicesPath);
-                if (!fs.existsSync(publicDir)) {
-                    fs.mkdirSync(publicDir, { recursive: true });
+            // Sync to public/services.json for frontend compatibility (skip on Vercel - read-only filesystem)
+            if (!isVercel) {
+                const allServicesResult = await db.sql`
+                    SELECT * FROM services WHERE approved = true ORDER BY created_at DESC
+                `;
+                
+                const publicServicesPath = path.join(__dirname, "public", "services.json");
+                try {
+                    const publicDir = path.dirname(publicServicesPath);
+                    if (!fs.existsSync(publicDir)) {
+                        fs.mkdirSync(publicDir, { recursive: true });
+                    }
+                    
+                    // Convert database format to JSON format
+                    const servicesForJson = allServicesResult.rows.map(service => ({
+                        id: service.id,
+                        name: service.name,
+                        email: service.email,
+                        phone: service.phone,
+                        location: service.location,
+                        address: service.address,
+                        services: typeof service.services === 'string' ? JSON.parse(service.services) : service.services,
+                        registered: service.registered,
+                        description: service.description,
+                        aboutMe: service.about_me || '',
+                        photo: service.photo || '',
+                        dateAdded: service.created_at
+                    }));
+                    
+                    fs.writeFileSync(publicServicesPath, JSON.stringify(servicesForJson, null, 2));
+                    console.log(`✅ Synced ${servicesForJson.length} approved services to public/services.json`);
+                } catch (err) {
+                    console.warn("Could not sync to public/services.json:", err.message);
                 }
-                
-                // Convert database format to JSON format
-                const servicesForJson = allServicesResult.rows.map(service => ({
-                    id: service.id,
-                    name: service.name,
-                    email: service.email,
-                    phone: service.phone,
-                    location: service.location,
-                    address: service.address,
-                    services: typeof service.services === 'string' ? JSON.parse(service.services) : service.services,
-                    registered: service.registered,
-                    description: service.description,
-                    aboutMe: service.about_me || '',
-                    photo: service.photo || '',
-                    dateAdded: service.created_at
-                }));
-                
-                fs.writeFileSync(publicServicesPath, JSON.stringify(servicesForJson, null, 2));
-                console.log(`✅ Synced ${servicesForJson.length} approved services to public/services.json`);
-            } catch (err) {
-                console.warn("Could not sync to public/services.json:", err.message);
+            } else {
+                console.log('ℹ️ Skipping public/services.json sync on Vercel (read-only filesystem)');
             }
             
             return res.json({ success: true, message: "Service approved and added to live listings." });
@@ -1011,8 +1017,11 @@ app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
             pendingServices.splice(serviceIndex, 1);
             fs.writeFileSync(PENDING_FILE, JSON.stringify(pendingServices, null, 2));
 
-            const publicServicesPath = path.join(__dirname, "public", "services.json");
-            fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
+            // Sync to public/services.json (skip on Vercel - read-only filesystem)
+            if (!isVercel) {
+                const publicServicesPath = path.join(__dirname, "public", "services.json");
+                fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
+            }
             
             return res.json({ success: true, message: "Service approved and added to live listings." });
         }
@@ -1171,37 +1180,42 @@ app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
         console.warn("Could not delete reviews:", reviewErr.message);
       }
       
-      // Sync to public/services.json for frontend compatibility
-      const allServicesResult = await db.sql`
-        SELECT * FROM services WHERE approved = true ORDER BY created_at DESC
-      `;
-      
-      const publicServicesPath = path.join(__dirname, "public", "services.json");
-      try {
-        const publicDir = path.dirname(publicServicesPath);
-        if (!fs.existsSync(publicDir)) {
-          fs.mkdirSync(publicDir, { recursive: true });
+      // Sync to public/services.json for frontend compatibility (skip on Vercel - read-only filesystem)
+      if (!isVercel) {
+        const allServicesResult = await db.sql`
+          SELECT * FROM services WHERE approved = true ORDER BY created_at DESC
+        `;
+        
+        const publicServicesPath = path.join(__dirname, "public", "services.json");
+        try {
+          const publicDir = path.dirname(publicServicesPath);
+          if (!fs.existsSync(publicDir)) {
+            fs.mkdirSync(publicDir, { recursive: true });
+          }
+          
+          // Convert database format to JSON format
+          const servicesForJson = allServicesResult.rows.map(service => ({
+            id: service.id,
+            name: service.name,
+            email: service.email,
+            phone: service.phone,
+            location: service.location,
+            address: service.address,
+            services: typeof service.services === 'string' ? JSON.parse(service.services) : service.services,
+            registered: service.registered,
+            description: service.description,
+            aboutMe: service.about_me || '',
+            photo: service.photo || '',
+            dateAdded: service.created_at
+          }));
+          
+          fs.writeFileSync(publicServicesPath, JSON.stringify(servicesForJson, null, 2));
+          console.log(`✅ Synced ${servicesForJson.length} approved services to public/services.json`);
+        } catch (err) {
+          console.warn("Could not sync to public/services.json:", err.message);
         }
-        
-        // Convert database format to JSON format
-        const servicesForJson = allServicesResult.rows.map(service => ({
-          id: service.id,
-          name: service.name,
-          email: service.email,
-          phone: service.phone,
-          location: service.location,
-          address: service.address,
-          services: service.services,
-          registered: service.registered,
-          description: service.description,
-          aboutMe: service.about_me,
-          photo: service.photo,
-          dateAdded: service.created_at
-        }));
-        
-        fs.writeFileSync(publicServicesPath, JSON.stringify(servicesForJson, null, 2));
-      } catch (err) {
-        console.warn("Could not sync to public/services.json:", err.message);
+      } else {
+        console.log('ℹ️ Skipping public/services.json sync on Vercel (read-only filesystem)');
       }
       
       return res.json({ success: true, message: "Service deleted successfully." });
@@ -1254,16 +1268,19 @@ app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
     approvedServices.splice(serviceIndex, 1);
     fs.writeFileSync(SERVICES_FILE, JSON.stringify(approvedServices, null, 2));
 
-    const publicServicesPath = path.join(__dirname, "public", "services.json");
-    try {
-      const publicDir = path.dirname(publicServicesPath);
-      if (!fs.existsSync(publicDir)) {
-        fs.mkdirSync(publicDir, { recursive: true });
+    // Sync to public/services.json (skip on Vercel - read-only filesystem)
+    if (!isVercel) {
+      const publicServicesPath = path.join(__dirname, "public", "services.json");
+      try {
+        const publicDir = path.dirname(publicServicesPath);
+        if (!fs.existsSync(publicDir)) {
+          fs.mkdirSync(publicDir, { recursive: true });
+        }
+        
+        fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
+      } catch (err) {
+        console.error("❌ CRITICAL: Could not sync to public/services.json:", err.message);
       }
-      
-      fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
-    } catch (err) {
-      console.error("❌ CRITICAL: Could not sync to public/services.json:", err.message);
     }
 
     res.json({ success: true, message: "Service deleted successfully." });
