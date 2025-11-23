@@ -680,10 +680,29 @@ app.get("/api/service/:id", async (req, res) => {
             const result = await db.sql`
                 SELECT * FROM services WHERE id = ${parseInt(req.params.id)}
             `;
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: "Service not found" });
+            }
             service = result.rows[0];
+            
+            // Format the service data properly
+            service = {
+                id: service.id,
+                name: service.name,
+                email: service.email,
+                phone: service.phone,
+                location: service.location,
+                address: service.address,
+                services: typeof service.services === 'string' ? JSON.parse(service.services) : service.services,
+                registered: service.registered,
+                description: service.description,
+                aboutMe: service.about_me || '',
+                photo: service.photo || '',
+                dateAdded: service.created_at
+            };
         } else {
             const services = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
-            service = services.find((s) => String(s.id) === req.params.id);
+            service = services.find((s) => String(s.id) === String(req.params.id));
         }
         
         if (!service) return res.status(404).json({ error: "Service not found" });
@@ -707,8 +726,6 @@ app.get("/api/service/:id", async (req, res) => {
 
         res.json({
             ...service,
-            aboutMe: service.about_me,
-            dateAdded: service.created_at,
             reviews: serviceReviews,
             averageRating: Math.round(averageRating * 10) / 10,
             reviewCount: serviceReviews.length,
