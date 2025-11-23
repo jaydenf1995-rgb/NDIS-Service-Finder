@@ -146,6 +146,32 @@ const isEmailConfigured = () => emailTransporter !== null;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded images from /tmp/uploads on Vercel (before static middleware)
+app.get("/uploads/:filename", (req, res) => {
+  try {
+    const filename = req.params.filename;
+    let filePath;
+    
+    if (isVercel) {
+      // On Vercel, serve from /tmp/uploads
+      filePath = path.join("/tmp", "uploads", filename);
+    } else {
+      // Local development - serve from public/uploads
+      filePath = path.join(__dirname, "public", "uploads", filename);
+    }
+    
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ error: "Image not found" });
+    }
+  } catch (err) {
+    console.error("Error serving image:", err);
+    res.status(500).json({ error: "Failed to serve image" });
+  }
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 
 // Global error handler for unhandled errors
@@ -589,6 +615,11 @@ app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
 
     const service = pendingServices[serviceIndex];
     
+    // Normalize photo path - ensure it starts with / for consistency
+    if (service.photo && !service.photo.startsWith('http') && !service.photo.startsWith('/')) {
+      service.photo = '/' + service.photo;
+    }
+    
     // Read approved services
     let approvedServices = [];
     if (fs.existsSync(SERVICES_FILE)) {
@@ -610,8 +641,20 @@ app.post("/api/admin/approve/:id", authenticateAdmin, async (req, res) => {
     const publicServicesPath = path.join(__dirname, "public", "services.json");
     try {
       fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
+      console.log(`✅ Synced ${approvedServices.length} services to public/services.json`);
     } catch (err) {
       console.warn("Could not sync to public/services.json:", err.message);
+    }
+    
+    // Also sync to root services.json if it exists (for backup)
+    if (!isVercel) {
+      const rootServicesPath = path.join(__dirname, "services.json");
+      try {
+        fs.writeFileSync(rootServicesPath, JSON.stringify(approvedServices, null, 2));
+        console.log(`✅ Synced ${approvedServices.length} services to root services.json`);
+      } catch (err) {
+        console.warn("Could not sync to root services.json:", err.message);
+      }
     }
 
     // Send approval email if configured
@@ -686,6 +729,91 @@ app.post("/api/admin/reject/:id", authenticateAdmin, async (req, res) => {
   } catch (err) {
     console.error("Error rejecting service:", err);
     res.status(500).json({ error: "Failed to reject service: " + err.message });
+  }
+});
+
+// Delete approved service (admin only)
+app.delete("/api/admin/delete/:id", authenticateAdmin, async (req, res) => {
+  try {
+    // Read approved services
+    let approvedServices = [];
+    if (fs.existsSync(SERVICES_FILE)) {
+      approvedServices = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
+    }
+
+    // Find the service to delete
+    const serviceIndex = approvedServices.findIndex(s => String(s.id) === String(req.params.id));
+    if (serviceIndex === -1) {
+      return res.status(404).json({ error: "Service not found in approved list." });
+    }
+
+    const service = approvedServices[serviceIndex];
+
+    // Optionally delete the associated image file
+    if (service.photo) {
+      try {
+        let imagePath;
+        if (isVercel) {
+          // Extract filename from path (could be /uploads/filename.jpg or uploads/filename.jpg)
+          const filename = service.photo.replace(/^\/?uploads\//, '');
+          imagePath = path.join("/tmp", "uploads", filename);
+        } else {
+          // Extract filename from path
+          const filename = service.photo.replace(/^uploads\//, '');
+          imagePath = path.join(__dirname, "public", "uploads", filename);
+        }
+        
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+          console.log(`✅ Deleted image: ${imagePath}`);
+        }
+      } catch (imageErr) {
+        console.warn("Could not delete image file:", imageErr.message);
+        // Continue with service deletion even if image deletion fails
+      }
+    }
+
+    // Remove from approved services
+    approvedServices.splice(serviceIndex, 1);
+    fs.writeFileSync(SERVICES_FILE, JSON.stringify(approvedServices, null, 2));
+
+    // Sync to public/services.json
+    const publicServicesPath = path.join(__dirname, "public", "services.json");
+    try {
+      fs.writeFileSync(publicServicesPath, JSON.stringify(approvedServices, null, 2));
+      console.log(`✅ Synced ${approvedServices.length} services to public/services.json after deletion`);
+    } catch (err) {
+      console.warn("Could not sync to public/services.json:", err.message);
+    }
+    
+    // Also sync to root services.json if it exists (for backup)
+    if (!isVercel) {
+      const rootServicesPath = path.join(__dirname, "services.json");
+      try {
+        fs.writeFileSync(rootServicesPath, JSON.stringify(approvedServices, null, 2));
+      } catch (err) {
+        console.warn("Could not sync to root services.json:", err.message);
+      }
+    }
+
+    res.json({ success: true, message: "Service deleted successfully." });
+  } catch (err) {
+    console.error("Error deleting service:", err);
+    res.status(500).json({ error: "Failed to delete service: " + err.message });
+  }
+});
+
+// Get all approved services (admin only) - for admin panel to show existing listings
+app.get("/api/admin/services", authenticateAdmin, (req, res) => {
+  try {
+    let approvedServices = [];
+    if (fs.existsSync(SERVICES_FILE)) {
+      approvedServices = JSON.parse(fs.readFileSync(SERVICES_FILE, "utf-8"));
+    }
+    res.json(approvedServices);
+  } catch (err) {
+    console.error("Error loading approved services:", err);
+    res.status(500).json({ error: "Failed to load services: " + err.message });
   }
 });
 
