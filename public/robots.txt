@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://ndiservicefinder.com/sitemap.xml
